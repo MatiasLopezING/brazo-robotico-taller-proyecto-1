@@ -1,0 +1,28 @@
+# Temporales de Office
+~$*
+*.tmp
+*.bak
+
+# Compilación de firmware
+*.o
+*.d
+*.elf
+*.bin
+*.hex
+*.map
+out/
+build/
+
+# Eclipse / MCUXpresso
+.metadata/
+.settings/
+
+# Proteus
+*.DBK
+*.PWI
+Backups/
+
+# Sistema
+Thumbs.db
+desktop.ini
+.DS_Store
