@@ -12,8 +12,8 @@ con riesgo químico, con monitoreo de gases y parada de emergencia por hardware.
 
 | Nombre | Legajo |
 |---|---|
+| Lopez Matias | 02670/0 |
 | Juan David Alvarez | 03100/2 |
-|  |  |
 |  |  |
 |  |  |
 
