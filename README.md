@@ -12,7 +12,7 @@ con riesgo químico, con monitoreo de gases y parada de emergencia por hardware.
 
 | Nombre | Legajo |
 |---|---|
-|  |  |
+| Juan David Alvarez | 03100/2 |
 |  |  |
 |  |  |
 |  |  |
