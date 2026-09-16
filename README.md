@@ -14,16 +14,16 @@ con riesgo químico, con monitoreo de gases y parada de emergencia por hardware.
 |---|---|
 | Lopez Matias | 02670/0 |
 | Juan David Alvarez | 03100/2 |
-|  |  |
+| Lautaro Lopes | 02978/9 |
 |  |  |
 
-Grupo N.º — · Docente a cargo: —
+Grupo N.º 3 · Docente a cargo: Malena Crespi
 
 ## Estado del proyecto
 
 | Entrega | Vencimiento | Estado |
 |---|---|---|
-| Informe inicial | 10/09/2026 | v0 redactado |
+| Informe inicial | 10/09/2026 | entregado |
 | Informe de avance 1 (diseño alto nivel, esquemáticos) | 05/10/2026 | pendiente |
 | Informe de avance 2 (diseño bajo nivel, PCB) | 05/11/2026 | pendiente |
 | Informe final | 11/02/2027 | pendiente |
