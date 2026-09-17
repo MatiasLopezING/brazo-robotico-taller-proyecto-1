@@ -37,12 +37,15 @@ Grupo N.º 3 · Docente a cargo: Malena Crespi
 A medida que avance el proyecto se sumarán el firmware, los esquemáticos, el
 diseño de PCB y los protocolos de ensayo.
 
-## Alternativa de solución
+## Dimensiones del brazo
 
-El informe evalúa cuatro alternativas (Anexo A). La propuesta es la
-**configuración SCARA**: los ejes de rotación verticales evitan que los
-servomotores trabajen contra la gravedad, lo que permite manipular 500 g con
-actuadores más económicos y hace viable resolver la cinemática inversa.
+El brazo cuenta con **cuatro grados de libertad** (hombro, codo, muñeca y
+pinza), accionado por cinco servomotores. Los primeros cálculos de
+dimensionamiento —geometría de eslabones, par necesario en cada articulación
+y selección de servos— se encuentran en el cuaderno
+`Dimensionamiento_brazo.ipynb`.
+
+Los valores obtenidos son preliminares; falta corrección y revisión en detalle.
 
 ## Convenciones de trabajo
 
