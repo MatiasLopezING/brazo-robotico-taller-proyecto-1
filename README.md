@@ -15,7 +15,7 @@ con riesgo químico, con monitoreo de gases y parada de emergencia por hardware.
 | Lopez Matias | 02670/0 |
 | Juan David Alvarez | 03100/2 |
 | Lautaro Lopes | 02978/9 |
-|  |  |
+| Ariana Magali Ariza | 02879/6 |
 
 Grupo N.º 3 · Docente a cargo: Malena Crespi
 
