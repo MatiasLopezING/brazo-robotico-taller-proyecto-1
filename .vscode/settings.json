@@ -1,3 +1,7 @@
 {
-    "cmake.sourceDirectory": "E:/IMP/Documentos/Ingenieria en Computacion/TMI/GitHub/brazo-robotico-taller-proyecto-1/codigo/libs/lwip"
+    "cmake.sourceDirectory": "E:/IMP/Documentos/Ingenieria en Computacion/TMI/GitHub/brazo-robotico-taller-proyecto-1/codigo/libs/lwip",
+
+    // Source Control: detectar repos git anidados (wiki-git vive dentro del workspace)
+    "git.repositoryScanMaxDepth": 2,
+    "git.openRepositoryInParentFolders": "always"
 }
