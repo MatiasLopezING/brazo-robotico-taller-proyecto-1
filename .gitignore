@@ -27,5 +27,6 @@ Thumbs.db
 desktop.ini
 .DS_Store
 
-# Wiki (repo git separado — no trackear desde el repo principal)
+# Wiki (repos git separados — no trackear desde el repo principal)
 Wiki/wiki-git/
+Wiki/wiki/

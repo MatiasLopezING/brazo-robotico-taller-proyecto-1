@@ -55,3 +55,9 @@ Los valores obtenidos son preliminares; falta corrección y revisión en detalle
   con tipos `feat | fix | docs | hw | test | chore` y áreas
   `firmware | hardware | mecanica | docs | ensayos`.
 - Una etiqueta por entrega: `informe-inicial`, `avance-1`, `avance-2`, `final`.
+
+## Documentación ampliada
+
+Para información más detallada sobre el diseño, decisiones de arquitectura,
+protocolo de comunicación y registro de avances, consultá la
+**[Wiki del proyecto](https://github.com/MatiasLopezING/brazo-robotico-taller-proyecto-1/wiki)**.
