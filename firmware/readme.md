@@ -19,6 +19,20 @@ Constituye el núcleo de procesamiento matemático del sistema. Esta capa recibe
 
 Centralizada en el archivo principal `main.c`, esta capa aloja el despachador de tareas (superloop) y la lógica de estados del sistema (MEF). Su función es orquestar la ejecución temporal de los módulos inferiores utilizando el reloj de interrupción del sistema (SysTick). Mediante el uso de retardos no bloqueantes, se definen ventanas de tiempo específicas para tareas recurrentes, tales como la adquisición de datos (leerJoystick()), la actualización de la trigonometría (calcularMovimiento()) y el refresco de las salidas (actualizarPWM()), garantizando el determinismo del sistema sin necesidad de un sistema operativo en tiempo real.
 
+## Diagrama de Estados de la MEF
+```mermaid
+---
+config:
+  layout: dagre
+---
+stateDiagram
+  [*] --> Reposo
+  Reposo --> Procesamiento:Joystick
+  Procesamiento --> Reposo:Return
+  Reposo --> Pinza:Pulsador
+  Pinza --> Reposo:Return
+```
+
 # Estraegia de Control y Cinematica
 
 El firmware implementa un enfoque de control híbrido diseñado específicamente para garantizar la manipulación segura de fluidos de laboratorio. 
