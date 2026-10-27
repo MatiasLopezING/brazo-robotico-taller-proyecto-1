@@ -1,0 +1,168 @@
+<?xml version="1.0"?>
+<!-- Brazo robotico teleoperado - Taller de Proyecto I (E0306), Grupo N 3, UNLP
+     GENERADO por genera_urdf.py a partir de brazo_parametros.py, que es la
+     unica fuente de cotas del proyecto. No editar a mano: editar los parametros
+     y volver a generar. verifica_parametros.py avisa si alguna copia quedo
+     atrasada, y verifica_urdf.py comprueba que este archivo describe la misma
+     cinematica que los cuadernos.
+
+     Convencion de ejes: z hacia arriba, x hacia adelante (el radio del brazo).
+     Cada junta de giro tiene su eje en y, salvo la base, que gira en z, de modo
+     que el angulo de cada junta ES el angulo del cuaderno:
+       base    q1, desde una direccion de referencia
+       hombro  q2, desde la vertical
+       codo    q3, desde el eslabon anterior
+       muneca  q4, desde el eslabon anterior
+     Equivale a la tabla de Denavit-Hartenberg documentada en la wiki, donde
+     theta2 = q2 - 90 por el corrimiento que impone el metodo.
+
+     Sin bloques <inertial>: las piezas todavia no estan modeladas en 3D, asi
+     que no hay masas ni tensores medidos y no se inventan. El modelo sirve para
+     visualizar, verificar cinematica y planificar; para simular dinamica en
+     Gazebo hay que agregarlos. -->
+<robot name="brazo_grupo3">
+
+  <material name="gris"><color rgba="0.82 0.83 0.80 1.0"/></material>
+  <material name="grafito"><color rgba="0.23 0.25 0.28 1.0"/></material>
+  <material name="acento"><color rgba="0.60 0.36 0.08 1.0"/></material>
+
+  <!-- caja base: aloja la fuente ATX y la chapa de lastre (ADR-009) -->
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0.05" rpy="0 0 0"/>
+      <geometry><box size="0.164 0.154 0.1"/></geometry>
+      <material name="gris"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.05" rpy="0 0 0"/>
+      <geometry><box size="0.164 0.154 0.1"/></geometry>
+    </collision>
+  </link>
+  <joint name="base" type="revolute">
+    <parent link="base_link"/>
+    <child link="columna"/>
+    <origin xyz="0 0 0.1" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-3.141593" upper="3.141593" velocity="1.740" effort="0.467"/>
+  </joint>
+  <!-- pedestal sobre la tapa: levanta el hombro a 190 mm de la mesa -->
+  <link name="columna">
+    <visual>
+      <origin xyz="0 0 0.045" rpy="0 0 0"/>
+      <geometry><box size="0.044 0.044 0.09"/></geometry>
+      <material name="grafito"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.045" rpy="0 0 0"/>
+      <geometry><box size="0.044 0.044 0.09"/></geometry>
+    </collision>
+  </link>
+  <joint name="hombro" type="revolute">
+    <parent link="columna"/>
+    <child link="brazo"/>
+    <origin xyz="0 0 0.09" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="0.872665" upper="1.919862" velocity="1.960" effort="2.802"/>
+  </joint>
+  <link name="brazo">
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><box size="0.03 0.04 0.12"/></geometry>
+      <material name="acento"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><box size="0.03 0.04 0.12"/></geometry>
+    </collision>
+  </link>
+  <joint name="codo" type="revolute">
+    <parent link="brazo"/>
+    <child link="antebrazo"/>
+    <origin xyz="0 0 0.12" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="0.000000" upper="2.094395" velocity="3.920" effort="1.401"/>
+  </joint>
+  <link name="antebrazo">
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><box size="0.03 0.04 0.12"/></geometry>
+      <material name="acento"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><box size="0.03 0.04 0.12"/></geometry>
+    </collision>
+  </link>
+  <joint name="muneca" type="revolute">
+    <parent link="antebrazo"/>
+    <child link="palma"/>
+    <origin xyz="0 0 0.12" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.884956" upper="0.698132" velocity="8.820" effort="0.623"/>
+  </joint>
+  <!-- palma: del eje de la muneca a la punta de los dedos hay L3 = 85 mm -->
+  <link name="palma">
+    <visual>
+      <origin xyz="0 0 0.0315" rpy="0 0 0"/>
+      <geometry><box size="0.045 0.04 0.063"/></geometry>
+      <material name="grafito"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.0315" rpy="0 0 0"/>
+      <geometry><box size="0.045 0.04 0.063"/></geometry>
+    </collision>
+  </link>
+  <joint name="dedo_izq" type="revolute">
+    <parent link="palma"/>
+    <child link="dedo_izq_link"/>
+    <origin xyz="0.0225 0 0.063" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="0.000000" upper="1.082104" velocity="5.880" effort="0.467"/>
+  </joint>
+  <link name="dedo_izq_link">
+    <visual>
+      <origin xyz="-0.006 0 0.011" rpy="0 0 0"/>
+      <geometry><box size="0.012 0.015 0.022"/></geometry>
+      <material name="acento"/>
+    </visual>
+    <collision>
+      <origin xyz="-0.006 0 0.011" rpy="0 0 0"/>
+      <geometry><box size="0.012 0.015 0.022"/></geometry>
+    </collision>
+  </link>
+  <joint name="dedo_der" type="revolute">
+    <parent link="palma"/>
+    <child link="dedo_der_link"/>
+    <origin xyz="-0.0225 0 0.063" rpy="0 0 0"/>
+    <axis xyz="0 -1 0"/>
+    <limit lower="0.000000" upper="1.082104" velocity="5.880" effort="0.467"/>
+    <mimic joint="dedo_izq" multiplier="1.0" offset="0.0"/>
+  </joint>
+  <link name="dedo_der_link">
+    <visual>
+      <origin xyz="0.006 0 0.011" rpy="0 0 0"/>
+      <geometry><box size="0.012 0.015 0.022"/></geometry>
+      <material name="acento"/>
+    </visual>
+    <collision>
+      <origin xyz="0.006 0 0.011" rpy="0 0 0"/>
+      <geometry><box size="0.012 0.015 0.022"/></geometry>
+    </collision>
+  </link>
+  <!-- punta: el punto que calculan los cuadernos, entre las dos mordazas -->
+  <joint name="punta_fija" type="fixed">
+    <parent link="palma"/>
+    <child link="punta"/>
+    <origin xyz="0 0 0.085" rpy="0 0 0"/>
+  </joint>
+  <link name="punta"/>
+
+  <!-- la mesa, como referencia de altura cero -->
+  <joint name="mesa_fija" type="fixed">
+    <parent link="base_link"/>
+    <child link="mesa"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <link name="mesa"/>
+
+</robot>

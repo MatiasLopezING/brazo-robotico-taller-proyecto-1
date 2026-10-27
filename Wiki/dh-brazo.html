@@ -1,0 +1,966 @@
+<title>Cinemática DH del brazo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: panel de instrumento. Dibujo del brazo a escala real a la izquierda,
+   matrices y lecturas a la derecha; una columna en el telefono. */
+:root{
+  --papel:#f4f5f3; --papel-2:#e9ebe6; --tinta:#1c2024; --tinta-2:#5d6670;
+  --linea:#c9cec6; --acento:#9a5b14; --acento-suave:#f0dcc2;
+  --ok:#1d6b52; --mal:#a3291f; --mal-suave:#f6ddd8;
+  --eje-x:#b3261e; --eje-y:#1d6b52; --eje-z:#1b4f9c;
+  --grafito:#3a4047; --guarda:#b3261e; --fantasma:#8d93a0;
+  --display:"IBM Plex Sans Condensed",system-ui,sans-serif;
+  --cuerpo:"IBM Plex Sans",system-ui,sans-serif;
+  --dato:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --papel:#14181b; --papel-2:#1d2226; --tinta:#e8ebe6; --tinta-2:#99a3ac;
+  --linea:#333c43; --acento:#e0a05a; --acento-suave:#4a3318;
+  --ok:#6cc39d; --mal:#ef8276; --mal-suave:#4a1f1a;
+  --eje-x:#f08279; --eje-y:#6cc39d; --eje-z:#7eaaf0;
+  --grafito:#b6bec6; --guarda:#ef8276; --fantasma:#6e7682; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --papel:#14181b; --papel-2:#1d2226; --tinta:#e8ebe6; --tinta-2:#99a3ac;
+  --linea:#333c43; --acento:#e0a05a; --acento-suave:#4a3318;
+  --ok:#6cc39d; --mal:#ef8276; --mal-suave:#4a1f1a;
+  --eje-x:#f08279; --eje-y:#6cc39d; --eje-z:#7eaaf0;
+  --grafito:#b6bec6; --guarda:#ef8276; --fantasma:#6e7682; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--papel);color:var(--tinta);font-family:var(--cuerpo);line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:26px 48px;margin:0}
+.hoja{max-width:1180px;margin:0 auto}
+h1{font-family:var(--display);font-size:clamp(1.5rem,4vw,2.1rem);font-weight:700;margin:0 0 2px;
+  letter-spacing:-.01em;text-wrap:balance}
+.bajada{color:var(--tinta-2);margin:0 0 18px;max-width:64ch;font-size:.95rem}
+h2{font-family:var(--display);font-size:1.02rem;font-weight:600;margin:0 0 10px;
+  text-transform:uppercase;letter-spacing:.07em;color:var(--tinta-2)}
+.tablero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:920px){.tablero{grid-template-columns:1fr}}
+.caja{background:var(--papel-2);border:1px solid var(--linea);border-radius:4px;padding:14px;min-width:0}
+.caja+.caja{margin-top:16px}
+figure{margin:0}
+svg{display:block;width:100%;height:auto;max-width:100%}
+.vistas{display:grid;grid-template-columns:minmax(0,1fr) 186px;gap:14px;align-items:start}
+@media (max-width:640px){.vistas{grid-template-columns:1fr}}
+.epigrafe{font-size:.76rem;color:var(--tinta-2);margin-top:6px;font-family:var(--dato);text-align:center}
+
+/* modos */
+.modos{display:flex;gap:0;border:1px solid var(--linea);border-radius:3px;overflow:hidden;margin-bottom:14px}
+.modos button{flex:1;border:0;border-right:1px solid var(--linea);border-radius:0;background:var(--papel);
+  padding:8px 6px;font-size:.84rem;color:var(--tinta-2)}
+.modos button:last-child{border-right:0}
+.modos button[aria-pressed=true]{background:var(--acento);color:var(--papel);font-weight:600}
+
+.mandos{display:grid;gap:11px}
+.eje{display:grid;grid-template-columns:116px minmax(0,1fr) 86px;gap:10px;align-items:center}
+@media (max-width:480px){.eje{grid-template-columns:92px minmax(0,1fr) 68px}}
+.eje label{font-size:.85rem;font-weight:500}
+.eje .lim{display:block;font-size:.71rem;color:var(--tinta-2);font-family:var(--dato)}
+.eje output{font-family:var(--dato);font-size:.9rem;text-align:right;font-variant-numeric:tabular-nums}
+.eje.foco label{color:var(--acento)}
+input[type=range]{width:100%;accent-color:var(--acento);min-width:0}
+input[type=range]:disabled{opacity:.45}
+.fuera output{color:var(--mal);font-weight:600}
+.opciones{display:flex;flex-wrap:wrap;gap:12px;margin-top:13px;font-size:.84rem}
+.opciones label{display:inline-flex;gap:6px;align-items:center}
+input[type=checkbox],input[type=radio]{accent-color:var(--acento)}
+.poses{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}
+button{font-family:var(--cuerpo);font-size:.83rem;padding:7px 10px;border-radius:3px;cursor:pointer;
+  border:1px solid var(--linea);background:var(--papel);color:var(--tinta)}
+button:hover{border-color:var(--acento);color:var(--acento)}
+button.fuerte{background:var(--acento);border-color:var(--acento);color:var(--papel)}
+button.fuerte:hover{color:var(--papel);opacity:.92}
+button:disabled{opacity:.4;cursor:default}
+:focus-visible{outline:2px solid var(--acento);outline-offset:2px}
+
+/* joystick */
+.pad{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.par{background:var(--papel);border:1px solid var(--linea);border-radius:3px;padding:8px 9px}
+.par h4{margin:0 0 6px;font-size:.8rem;font-weight:600;display:flex;justify-content:space-between;gap:6px}
+.par h4 span{font-family:var(--dato);color:var(--tinta-2);font-weight:400}
+.par .bts{display:flex;gap:6px}
+.par button{flex:1;font-family:var(--dato);font-size:.86rem;padding:8px 0;touch-action:none}
+.par button.activo{background:var(--acento);border-color:var(--acento);color:var(--papel)}
+.teclas{font-family:var(--dato);font-size:.76rem;color:var(--tinta-2);margin-top:10px}
+
+.lecturas{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:1px;background:var(--linea);
+  border:1px solid var(--linea);border-radius:3px;overflow:hidden}
+.lecturas div{background:var(--papel-2);padding:7px 9px}
+.lecturas dt{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--tinta-2)}
+.lecturas dd{margin:2px 0 0;font-family:var(--dato);font-size:1rem;font-variant-numeric:tabular-nums}
+.estados{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
+.chip{font-family:var(--dato);font-size:.76rem;padding:4px 9px;border-radius:999px;border:1px solid}
+.chip.si{color:var(--ok);border-color:var(--ok)}
+.chip.no{color:var(--mal);border-color:var(--mal);background:var(--mal-suave)}
+.chip.neutro{color:var(--tinta-2);border-color:var(--linea)}
+
+.mats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+@media (max-width:540px){.mats{grid-template-columns:1fr}}
+.mat{min-width:0}
+.mat h3{font-family:var(--dato);font-size:.75rem;font-weight:600;margin:0 0 5px;color:var(--tinta-2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mat h3 b{color:var(--acento);font-weight:600}
+.m{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--linea);
+  border:1px solid var(--linea);border-radius:2px}
+.m span{background:var(--papel);font-family:var(--dato);font-size:.73rem;padding:4px 3px;text-align:right;
+  font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  transition:background .45s ease,color .45s ease}
+.m span.rot{box-shadow:inset 0 0 0 0 transparent}
+.m span.tras{background:var(--papel-2)}
+.m span.dep{box-shadow:inset 0 0 0 1.5px var(--acento)}
+.m span.cambia{background:var(--acento-suave);color:var(--acento);transition:none}
+.m.simb span{font-size:.66rem;text-align:center}
+.mat.total h3{color:var(--tinta)}
+.mat.total .m span{font-size:.77rem}
+@media (prefers-reduced-motion:reduce){.m span{transition:none}}
+.control{font-size:.79rem;color:var(--tinta-2);font-family:var(--dato);margin-top:10px;
+  border-top:1px solid var(--linea);padding-top:8px}
+.control b{color:var(--ok)}
+.herramientas{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:11px;font-size:.82rem}
+.herramientas label{display:inline-flex;gap:6px;align-items:center}
+select{font-family:var(--dato);font-size:.8rem;padding:4px 6px;border:1px solid var(--linea);
+  border-radius:3px;background:var(--papel);color:var(--tinta)}
+
+table{border-collapse:collapse;width:100%;font-size:.83rem}
+th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--linea)}
+th{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--tinta-2);font-weight:600}
+td.n,th.n{text-align:right;font-family:var(--dato);font-variant-numeric:tabular-nums}
+tr.activa td{background:var(--acento-suave)}
+.nota{font-size:.85rem;color:var(--tinta-2);margin:10px 0 0}
+.nota strong{color:var(--tinta)}
+.inv{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;font-size:.83rem}
+.inv input[type=number]{width:70px;font-family:var(--dato);font-size:.83rem;padding:5px 6px;
+  border:1px solid var(--linea);border-radius:3px;background:var(--papel);color:var(--tinta)}
+#invMsg{font-family:var(--dato);font-size:.77rem}
+.leyenda{display:flex;flex-wrap:wrap;gap:11px;font-size:.76rem;color:var(--tinta-2);margin-top:9px;
+  font-family:var(--dato)}
+.leyenda i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.pie{margin-top:28px;font-size:.79rem;color:var(--tinta-2);border-top:1px solid var(--linea);padding-top:12px}
+#copiaAux{position:absolute;left:-9999px;top:0}
+</style>
+
+<div class="hoja">
+  <h1>Cinemática DH del brazo</h1>
+  <p class="bajada">Brazo del Grupo 3 a escala real, con los sistemas de referencia de
+    Denavit-Hartenberg y las cuatro matrices actualizándose mientras se mueve. Dos modos: mover un
+    eje a la vez, o mandarlo por velocidad como lo hará el joystick, con la guarda rechazando
+    incrementos. Eslabones de 120, 120 y 85 mm; hombro a 190 mm de la mesa. La vista
+    tridimensional y la tarea completa viven en el paquete de ROS 2, en <code>ros2_ws/src/
+    brazo_description</code>: esta página muestra lo que RViz no muestra.</p>
+
+  <div class="tablero">
+    <section>
+      <div class="caja">
+        <div class="modos" role="group" aria-label="Modo de simulación">
+          <button type="button" data-modo="manual" aria-pressed="true">Manual</button>
+          <button type="button" data-modo="joystick" aria-pressed="false">Joystick (velocidad)</button>
+        </div>
+
+        <div class="vistas">
+          <figure>
+            <svg id="lateral" viewBox="0 0 490 570" role="img"
+                 aria-label="Vista lateral del brazo con los sistemas de referencia">
+              <g id="fondo"></g><g id="movil"></g>
+            </svg>
+          </figure>
+          <figure>
+            <svg id="planta" viewBox="0 0 186 196" role="img"
+                 aria-label="Vista en planta con el giro de la base"></svg>
+            <figcaption class="epigrafe" id="plantaPie"></figcaption>
+          </figure>
+        </div>
+        <p class="leyenda">
+          <span><i style="background:var(--eje-x)"></i>eje x</span>
+          <span><i style="background:var(--eje-y)"></i>eje y</span>
+          <span><i style="background:var(--eje-z)"></i>eje z (⊙ sale del plano)</span>
+          <span><i style="background:var(--guarda)"></i>zona prohibida</span>
+          <span><i style="background:var(--fantasma)"></i>pose de referencia</span>
+        </p>
+      </div>
+
+      <div class="caja" id="panel-manual">
+        <h2>Un eje a la vez</h2>
+        <div class="mandos">
+          <div class="eje" id="fila-q1">
+            <label for="q1">q1 · base<span class="lim">360°</span></label>
+            <input type="range" id="q1" min="-180" max="180" step="1" value="35">
+            <output id="o-q1"></output>
+          </div>
+          <div class="eje" id="fila-q2">
+            <label for="q2">q2 · hombro<span class="lim" id="lim-q2"></span></label>
+            <input type="range" id="q2" min="50" max="110" step="0.5" value="94">
+            <output id="o-q2"></output>
+          </div>
+          <div class="eje" id="fila-q3">
+            <label for="q3">q3 · codo<span class="lim" id="lim-q3"></span></label>
+            <input type="range" id="q3" min="0" max="120" step="0.5" value="64">
+            <output id="o-q3"></output>
+          </div>
+          <div class="eje" id="fila-q4">
+            <label for="q4">q4 · muñeca<span class="lim" id="lim-q4"></span></label>
+            <input type="range" id="q4" min="-108" max="40" step="0.5" value="-68">
+            <output id="o-q4"></output>
+          </div>
+          <div class="eje" id="fila-q5">
+            <label for="q5">q5 · pinza<span class="lim">apertura entre caras</span></label>
+            <input type="range" id="q5" min="0" max="100" step="1" value="100">
+            <output id="o-q5"></output>
+          </div>
+        </div>
+        <div class="opciones">
+          <label><input type="checkbox" id="asistida" checked> muñeca asistida: q4 = 90 − q2 − q3</label>
+          <label><input type="checkbox" id="libre"> permitir salir de las ventanas</label>
+          <label><input type="checkbox" id="banda" checked> banda útil a z = 70</label>
+        </div>
+        <div class="poses">
+          <button type="button" data-pose="cero">Todo a cero</button>
+          <button type="button" data-pose="horizontal">Estirado horizontal</button>
+          <button type="button" data-pose="agarre">Agarre a r = 250</button>
+          <button type="button" data-pose="colision">Pose de colisión</button>
+          <button type="button" id="barrer">Barrer el hombro</button>
+        </div>
+        <div class="inv">
+          <span>Inversa:&nbsp; r</span>
+          <input type="number" id="invR" value="250" step="5" min="100" max="330">
+          <span>z</span>
+          <input type="number" id="invZ" value="70" step="5" min="0" max="400">
+          <button type="button" id="resolver">Resolver</button>
+          <span id="invMsg"></span>
+        </div>
+      </div>
+
+      <div class="caja" id="panel-joystick" hidden>
+        <h2>Joystick: el mando pide velocidad</h2>
+        <p class="nota" style="margin:0 0 12px">Mantené apretado un botón o usá el teclado. Cada eje
+          integra velocidad, como en el firmware: el incremento se evalúa <strong>antes</strong> de
+          aplicarse y se rechaza si viola la guarda o un tope.</p>
+        <div class="pad" id="pad"></div>
+        <div class="opciones">
+          <label>velocidad&nbsp;
+            <input type="range" id="vel" min="5" max="120" step="5" value="35" style="width:120px">
+            <output id="o-vel" style="font-family:var(--dato)"></output>
+          </label>
+          <label><input type="checkbox" id="asistida2" checked> muñeca asistida</label>
+          <label><input type="checkbox" id="rastro" checked> dejar rastro de la punta</label>
+        </div>
+        <p class="teclas">teclas: <b>A/D</b> base · <b>W/S</b> hombro · <b>I/K</b> codo ·
+          <b>J/L</b> muñeca · <b>O/P</b> pinza</p>
+      </div>
+
+    </section>
+
+    <section>
+      <div class="caja">
+        <h2>Estado</h2>
+        <dl class="lecturas">
+          <div><dt>x</dt><dd id="r-x"></dd></div>
+          <div><dt>y</dt><dd id="r-y"></dd></div>
+          <div><dt>z</dt><dd id="r-z"></dd></div>
+          <div><dt>radio r</dt><dd id="r-r"></dd></div>
+          <div><dt>α234</dt><dd id="r-a"></dd></div>
+          <div><dt>muñeca z</dt><dd id="r-mz"></dd></div>
+          <div><dt>pinza</dt><dd id="r-g"></dd></div>
+          <div><dt>punta</dt><dd id="r-v"></dd></div>
+        </dl>
+        <div class="estados" id="estados"></div>
+      </div>
+
+      <div class="caja">
+        <h2>Las matrices, en vivo</h2>
+        <div class="herramientas">
+          <label><input type="checkbox" id="acum"> ver acumuladas T₁…T₄</label>
+          <label><input type="checkbox" id="simb"> ver fórmula</label>
+          <label><input type="checkbox" id="dec3"> 3 decimales</label>
+          <label>depende de
+            <select id="foco">
+              <option value="0">q1</option><option value="1" selected>q2</option>
+              <option value="2">q3</option><option value="3">q4</option>
+            </select>
+          </label>
+        </div>
+        <div class="mats" id="mats"></div>
+        <div class="mat total" id="matT" style="margin-top:11px"></div>
+        <div class="mat total" id="matD" style="margin-top:11px" hidden></div>
+        <p class="control" id="control"></p>
+        <div class="poses">
+          <button type="button" id="fijar">Fijar pose de referencia</button>
+          <button type="button" id="copiar">Copiar matrices</button>
+          <span id="copiaMsg" style="font-family:var(--dato);font-size:.77rem"></span>
+        </div>
+      </div>
+
+      <div class="caja">
+        <h2>La tabla</h2>
+        <table>
+          <thead><tr><th>i</th><th>Articulación</th><th class="n">θᵢ</th><th class="n">dᵢ</th>
+            <th class="n">aᵢ</th><th class="n">αᵢ</th></tr></thead>
+          <tbody id="tabla"></tbody>
+        </table>
+        <p class="nota"><strong>θ₂ = q2 − 90°</strong> porque el método mide desde x₁, que la torsión
+          de −90° dejó horizontal, y el brazo mide q2 desde la vertical. <strong>θ₃ y θ₄ no llevan
+          corrección</strong>: el método ya mide cada ángulo desde el eslabón anterior. La pinza,
+          q5, no es un eslabón de la cadena: abre y cierra, no mueve la punta.</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="caja" style="margin-top:22px">
+    <h2>Qué conviene mirar en cada modo</h2>
+    <table>
+      <tbody>
+        <tr><td><strong>La pose de colisión</strong> es el caso que justifica la guarda: hombro 110°,
+          codo 88° y muñeca −108°, <em>los cuatro ejes dentro de su ventana</em>, y la muñeca queda a
+          35 mm de la mesa y 76 mm del eje, o sea 65 mm por debajo de la tapa de la caja. Respetando
+          los cuatro topes, el 7,8 % de las poses son así.</td></tr>
+        <tr><td><strong>Manual.</strong> Girá <em>q1</em>: en planta el brazo gira entero y en el
+          plano no cambia nada, pero en A₁ se mueven cuatro entradas. El eje z₁ del hombro sale del
+          plano (⊙) mientras z₀ está vertical: esos 90° son el único α de la tabla. Poné
+          <em>q2 = 90°</em> y A₂ queda como una traslación pura de 120 mm.</td></tr>
+        <tr><td><strong>Joystick.</strong> Es el control real: el mando pide velocidad, no posición.
+          Mantené el hombro bajando y vas a ver el incremento rechazado al llegar al tope y, antes de
+          eso, la guarda frenando la muñeca aunque los cuatro ejes estén dentro de rango. El contador de
+          rechazos es lo que el firmware tiene que implementar.</td></tr>
+        <tr><td><strong>Lo que esta página no hace.</strong> La vista tridimensional con los
+          volúmenes del brazo y la tarea completa de punta a punta están en el modelo URDF y en
+          RViz 2, que es el camino que entienden las demás herramientas. Acá queda lo que RViz no
+          muestra: las matrices, los sistemas de Denavit-Hartenberg —RViz dibuja los del URDF, que
+          son otros—, la guarda contra la caja y el rechazo de incrementos.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="pie">Taller de Proyecto I (E0306) · Grupo N.º 3 · Matias Lopez (02670/0). Los números
+    salen de <code>Cinematica_brazo.ipynb</code>, sección 3. El control debajo de las matrices
+    compara, en cada cuadro, el producto de matrices contra la fórmula geométrica que ejecuta el
+    firmware.</p>
+  <textarea id="copiaAux" aria-hidden="true" tabindex="-1"></textarea>
+</div>
+
+<script>
+'use strict';
+const L1 = 120, L2 = 120, L3 = 85, H_HOMBRO = 190;
+const CAJA_W = 164, CAJA_D = 154, CAJA_H = 100;
+const R_CAJA = Math.hypot(CAJA_W, CAJA_D) / 2;        // 112,5 mm: la esquina
+const R_GUARDA = Math.ceil(R_CAJA);                   // 113 mm, redondeado hacia afuera
+const Z_GARRA = 70, VASO_D = 55, VASO_H = 90, R_VASO = 250;
+const PINZA_CERRADA = 55, PINZA_ABIERTA = 70;         // apertura entre caras, mm
+const OMEGA_BASE = 100;                               // tope de velocidad de base, grados/s
+const VENT = { q1: [-180, 180], q2: [50, 110], q3: [0, 120], q4: [-108, 40] };
+const ANCHO = { q1: [-180, 180], q2: [0, 180], q3: [-60, 150], q4: [-150, 90] };
+const EJES = ['q1', 'q2', 'q3', 'q4'];
+const rad = g => g * Math.PI / 180, gra = r => r * 180 / Math.PI;
+const lim = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/* ---------- Denavit-Hartenberg ---------- */
+const I4 = () => [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];
+function mul(A, B){
+  const C = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++){
+    let s = 0; for (let k = 0; k < 4; k++) s += A[i][k] * B[k][j];
+    C[i][j] = s;
+  }
+  return C;
+}
+function eslabonDH(t, d, a, al){                       // Rot_z(t)·Tz(d)·Tx(a)·Rot_x(al)
+  const ct = Math.cos(t), st = Math.sin(t), ca = Math.cos(al), sa = Math.sin(al);
+  return [[ct, -st*ca,  st*sa, a*ct],
+          [st,  ct*ca, -ct*sa, a*st],
+          [ 0,     sa,     ca,    d],
+          [ 0,      0,      0,    1]];
+}
+const tablaDH = q => [
+  [q[0],                  H_HOMBRO, 0,  -Math.PI/2],
+  [q[1] - Math.PI/2,      0,        L1,  0],
+  [q[2],                  0,        L2,  0],
+  [q[3],                  0,        L3,  0]];
+function cadena(q){
+  const As = tablaDH(q).map(f => eslabonDH(...f));
+  const Ts = [I4()];
+  As.forEach(A => Ts.push(mul(Ts[Ts.length - 1], A)));
+  return { As, Ts };
+}
+function geometrica(q){                                // la formula del firmware
+  const [q1, q2, q3, q4] = q, a23 = q2 + q3, a234 = a23 + q4;
+  const r = L1*Math.sin(q2) + L2*Math.sin(a23) + L3*Math.sin(a234);
+  const z = H_HOMBRO + L1*Math.cos(q2) + L2*Math.cos(a23) + L3*Math.cos(a234);
+  return { r, z, x: r*Math.cos(q1), y: r*Math.sin(q1), a234 };
+}
+function articulaciones(q2, q3, q4){                   // (r, z) de hombro, codo, muneca y punta
+  const a23 = q2 + q3, a234 = a23 + q4;
+  const co = [L1*Math.sin(q2), H_HOMBRO + L1*Math.cos(q2)];
+  const mu = [co[0] + L2*Math.sin(a23), co[1] + L2*Math.cos(a23)];
+  return [[0, H_HOMBRO], co, mu, [mu[0] + L3*Math.sin(a234), mu[1] + L3*Math.cos(a234)]];
+}
+const chocaCaja = p => p.some(([r, z]) => z < 0 || (z < CAJA_H && Math.abs(r) < R_GUARDA));
+const chocaGrados = g => chocaCaja(articulaciones(rad(g[1]), rad(g[2]), rad(g[3])));
+const dentroVentanas = g => EJES.every((id, i) =>
+  g[i] >= VENT[id][0] - 1e-6 && g[i] <= VENT[id][1] + 1e-6);
+
+/* ---------- inversa cerrada, dos eslabones, pinza horizontal ---------- */
+function inversa(r, z){
+  const rx = r - L3, zy = z - H_HOMBRO;                // la muneca, descontando el ultimo eslabon
+  const d = Math.hypot(rx, zy);
+  if (d > L1 + L2 || d < Math.abs(L1 - L2)) return null;
+  const semi = Math.acos(Math.min(1, d / (L1 + L2)));  // L1 = L2: triangulo isosceles
+  const medio = Math.atan2(rx, zy);                    // angulo del punto medio, desde la vertical
+  for (const s of [1, -1]){                            // codo abajo y codo arriba
+    const g = [gra(medio - s*semi), gra(2*s*semi), 0];
+    g[2] = 90 - g[0] - g[1];
+    const prueba = [0, g[0], g[1], g[2]];
+    if (dentroVentanas(prueba) && !chocaGrados(prueba)) return g;
+  }
+  return null;
+}
+
+/* ---------- banda alcanzable a la altura de agarre ---------- */
+const banda = (() => {
+  let min = Infinity, max = -Infinity;
+  const N = 240;
+  for (let i = 0; i <= N; i++){
+    const q2 = VENT.q2[0] + (VENT.q2[1] - VENT.q2[0]) * i / N;
+    for (let j = 0; j <= N; j++){
+      const q3 = VENT.q3[0] + (VENT.q3[1] - VENT.q3[0]) * j / N;
+      const q4 = 90 - q2 - q3;
+      if (q4 < VENT.q4[0] || q4 > VENT.q4[1]) continue;
+      const p = articulaciones(rad(q2), rad(q3), rad(q4));
+      if (chocaCaja(p)) continue;
+      if (Math.abs(p[3][1] - Z_GARRA) <= 1){ min = Math.min(min, p[3][0]); max = Math.max(max, p[3][0]); }
+    }
+  }
+  return { min, max };
+})();
+
+/* ---------- dibujo ---------- */
+const OFF_R = 90, OFF_Z = 530;                         // mm -> unidades del viewBox
+const X = r => r + OFF_R, Y = z => OFF_Z - z;
+const num = (v, d = 0) => (Math.abs(v) < 5e-4 ? 0 : v).toFixed(d).replace('.', ',');
+const $ = id => document.getElementById(id);
+
+const estado = {
+  modo: 'manual', q: [35, 94.2, 63.6, -67.8], g: 1, foco: 1,
+  ref: null, rastro: [], vel: {}, rechazos: 0, vPunta: 0, omega: 0,
+  bloqueado: null, tocando: new Set()
+};
+
+function flecha(x1, y1, x2, y2, color, rotulo){
+  const ang = Math.atan2(y2 - y1, x2 - x1), L = 7, a = 0.42;
+  const p = `${x2},${y2} ${x2 - L*Math.cos(ang - a)},${y2 - L*Math.sin(ang - a)} ` +
+            `${x2 - L*Math.cos(ang + a)},${y2 - L*Math.sin(ang + a)}`;
+  const tx = x2 + 11*Math.cos(ang), ty = y2 + 11*Math.sin(ang);
+  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="1.6"/>` +
+         `<polygon points="${p}" fill="${color}"/>` +
+         `<text x="${tx}" y="${ty}" fill="${color}" font-size="11" font-family="var(--dato)"
+           text-anchor="middle" dominant-baseline="middle">${rotulo}</text>`;
+}
+function sistema(T, q1, etiqueta){
+  const plano = v => [v[0]*Math.cos(q1) + v[1]*Math.sin(q1), v[2],
+                      -v[0]*Math.sin(q1) + v[1]*Math.cos(q1)];
+  const or = plano([T[0][3], T[1][3], T[2][3]]), x0 = X(or[0]), y0 = Y(or[1]);
+  let s = '';
+  for (const [col, nom, color, largo] of
+       [[0, 'x', 'var(--eje-x)', 42], [1, 'y', 'var(--eje-y)', 30], [2, 'z', 'var(--eje-z)', 30]]){
+    const v = plano([T[0][col], T[1][col], T[2][col]]), rot = nom + etiqueta;
+    if (Math.abs(v[2]) > 0.9){                          // perpendicular al plano: lo veo de punta
+      s += `<circle cx="${x0}" cy="${y0}" r="6" fill="none" stroke="${color}" stroke-width="1.4"/>` +
+           `<circle cx="${x0}" cy="${y0}" r="1.8" fill="${color}"/>` +
+           `<text x="${x0 + 11}" y="${y0 - 9}" fill="${color}" font-size="11"
+             font-family="var(--dato)">${rot}</text>`;
+    } else {
+      s += flecha(x0, y0, x0 + v[0]*largo, y0 - v[1]*largo, color, rot);
+    }
+  }
+  return s;
+}
+function arco(cx, cz, r, desde, hasta, color, rotulo){
+  const p = a => `${X(cx + r*Math.sin(a))},${Y(cz + r*Math.cos(a))}`;   // angulos desde la vertical
+  const med = (desde + hasta) / 2;
+  return `<path d="M ${p(desde)} A ${r} ${r} 0 ${Math.abs(hasta - desde) > Math.PI ? 1 : 0}
+            ${hasta > desde ? 1 : 0} ${p(hasta)}" fill="none" stroke="${color}" stroke-width="1.1"
+            stroke-dasharray="3 2"/>` +
+         `<text x="${X(cx + (r + 13)*Math.sin(med))}" y="${Y(cz + (r + 13)*Math.cos(med))}"
+            fill="${color}" font-size="11" font-family="var(--dato)" text-anchor="middle"
+            dominant-baseline="middle">${rotulo}</text>`;
+}
+function vaso(rc, zBase, color, opac){
+  return `<rect x="${X(rc - VASO_D/2)}" y="${Y(zBase + VASO_H)}" width="${VASO_D}" height="${VASO_H}"
+            fill="none" stroke="${color}" stroke-width="1.2" opacity="${opac}"/>` +
+         `<rect x="${X(rc - VASO_D/2) + 1.5}" y="${Y(zBase + VASO_H - 16)}" width="${VASO_D - 3}"
+            height="${VASO_H - 17.5}" fill="var(--eje-z)" opacity="${0.16 * opac}"/>`;
+}
+function brazoSVG(q, g, color, opac, conSistemas, conVaso){
+  const pts = articulaciones(rad(q[1]), rad(q[2]), rad(q[3])), s = [];
+  for (let i = 0; i < 3; i++){
+    s.push(`<line x1="${X(pts[i][0])}" y1="${Y(pts[i][1])}" x2="${X(pts[i+1][0])}"
+             y2="${Y(pts[i+1][1])}" stroke="${color}" stroke-width="7" stroke-linecap="round"
+             opacity="${0.9 * opac}"/>`);
+  }
+  pts.forEach(([r, z], i) => s.push(`<circle cx="${X(r)}" cy="${Y(z)}" r="${i === 3 ? 3.4 : 4.6}"
+    fill="var(--papel)" stroke="${color}" stroke-width="2" opacity="${opac}"/>`));
+  // pinza: dos dedos separados por la apertura, sobre el ultimo eslabon
+  const a234 = rad(q[1] + q[2] + q[3]), ux = Math.sin(a234), uz = Math.cos(a234);
+  const sep = (PINZA_CERRADA + (PINZA_ABIERTA - PINZA_CERRADA) * g) / 2;
+  const [pr, pz] = pts[3];
+  for (const sg of [1, -1]){
+    const nx = sg*uz*sep, nz = -sg*ux*sep;
+    s.push(`<path d="M ${X(pr + nx*0.55)} ${Y(pz + nz*0.55)} L ${X(pr + nx)} ${Y(pz + nz)}
+             L ${X(pr + nx + ux*18)} ${Y(pz + nz + uz*18)}" fill="none" stroke="${color}"
+             stroke-width="3" stroke-linecap="round" opacity="${opac}"/>`);
+  }
+  if (conVaso) s.push(vaso(pts[3][0], pts[3][1] - (VASO_H - 20), 'var(--tinta)', opac));
+  if (conSistemas){
+    const { Ts } = cadena(q.map(rad));
+    s.push(sistema(I4(), rad(q[0]), '₀'));
+    for (let i = 1; i <= 4; i++) s.push(sistema(Ts[i], rad(q[0]), ['', '₁', '₂', '₃', '₄'][i]));
+    s.push(arco(0, H_HOMBRO, 54, 0, rad(q[1]), 'var(--tinta-2)', `q2 = ${num(q[1], 1)}°`));
+    s.push(arco(0, H_HOMBRO, 34, Math.PI/2, rad(q[1]), 'var(--eje-x)', `θ₂ = ${num(q[1] - 90, 1)}°`));
+  }
+  return s.join('');
+}
+
+function fondoSVG(){
+  const g = [`<defs>
+    <pattern id="rayado" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="0" y2="7" stroke="var(--linea)" stroke-width="2"/></pattern>
+    <pattern id="veda" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="var(--guarda)" stroke-width="1.1" opacity=".5"/></pattern>
+  </defs>`];
+  g.push(`<rect x="0" y="${Y(0)}" width="490" height="34" fill="url(#rayado)" opacity=".8"/>`);
+  g.push(`<line x1="0" y1="${Y(0)}" x2="490" y2="${Y(0)}" stroke="var(--tinta)" stroke-width="1.6"/>`);
+  g.push(`<text x="4" y="${Y(0) + 15}" font-size="11" fill="var(--tinta-2)"
+           font-family="var(--dato)">mesa · z = 0</text>`);
+  g.push(`<rect x="${X(-R_GUARDA)}" y="${Y(CAJA_H)}" width="${2*R_GUARDA}" height="${CAJA_H}"
+           fill="url(#veda)" stroke="var(--guarda)" stroke-width="1" stroke-dasharray="4 3"/>`);
+  g.push(`<rect x="${X(-CAJA_W/2)}" y="${Y(CAJA_H)}" width="${CAJA_W}" height="${CAJA_H}"
+           fill="var(--papel-2)" stroke="var(--tinta-2)" stroke-width="1.4"/>`);
+  g.push(`<text x="${X(0)}" y="${Y(CAJA_H/2)}" font-size="11" fill="var(--tinta-2)"
+           font-family="var(--dato)" text-anchor="middle">caja 164×100</text>`);
+  g.push(`<text x="${X(R_GUARDA) + 5}" y="${Y(CAJA_H) + 13}" font-size="11" fill="var(--guarda)"
+           font-family="var(--dato)">r = ${R_GUARDA}</text>`);
+  g.push(`<rect x="${X(-22)}" y="${Y(H_HOMBRO)}" width="44" height="${H_HOMBRO - CAJA_H}"
+           fill="var(--papel-2)" stroke="var(--tinta-2)" stroke-width="1.2"/>`);
+  g.push(`<line x1="${X(120)}" y1="${Y(Z_GARRA)}" x2="490" y2="${Y(Z_GARRA)}" stroke="var(--tinta-2)"
+           stroke-width="1" stroke-dasharray="5 4"/>`);
+  g.push(`<text x="486" y="${Y(Z_GARRA) - 6}" font-size="11" fill="var(--tinta-2)"
+           font-family="var(--dato)" text-anchor="end">altura de agarre · z = 70</text>`);
+  $('fondo').innerHTML = g.join('');
+}
+function fondoBanda(){
+  const g = [];
+  if ($('banda').checked){
+    g.push(`<line x1="${X(banda.min)}" y1="${Y(Z_GARRA)}" x2="${X(banda.max)}" y2="${Y(Z_GARRA)}"
+             stroke="var(--acento)" stroke-width="5" opacity=".55"/>`);
+    g.push(`<text x="${X((banda.min + banda.max) / 2)}" y="${Y(Z_GARRA) + 16}" font-size="11"
+             fill="var(--acento)" font-family="var(--dato)" text-anchor="middle">banda útil
+             ${num(banda.min)}–${num(banda.max)} mm</text>`);
+  }
+  return g.join('');
+}
+
+function dibujarLateral(e){
+  const g = [fondoBanda()];
+  const conVasoQuieto = !e.conVaso;
+  if (conVasoQuieto) g.push(vaso(R_VASO, 0, 'var(--tinta-2)', 1));
+  if (estado.ref) g.push(brazoSVG(estado.ref.q, estado.ref.g, 'var(--fantasma)', .55, false, false));
+  if (estado.rastro.length > 1){
+    g.push(`<polyline points="${estado.rastro.map(([r, z]) => `${X(r)},${Y(z)}`).join(' ')}"
+             fill="none" stroke="var(--acento)" stroke-width="1.2" stroke-dasharray="2 3"/>`);
+  }
+  g.push(brazoSVG(e.q, e.g, e.choca ? 'var(--guarda)' : 'var(--grafito)', 1, true, e.conVaso));
+  $('movil').innerHTML = g.join('');
+}
+
+function dibujarPlanta(e){
+  const C = 93, k = 93 / 345, g = [], r = Math.abs(e.geo.r);
+  const px = (ra, an) => [C + ra*k*Math.cos(an), C - ra*k*Math.sin(an)];
+  g.push(`<circle cx="${C}" cy="${C}" r="${banda.max*k}" fill="var(--acento)" opacity=".10"/>`);
+  g.push(`<circle cx="${C}" cy="${C}" r="${banda.min*k}" fill="var(--papel-2)"/>`);
+  g.push(`<circle cx="${C}" cy="${C}" r="${R_GUARDA*k}" fill="none" stroke="var(--guarda)"
+           stroke-width="1" stroke-dasharray="3 2"/>`);
+  const phi = r > 100 ? 2*Math.asin(Math.min(1, 100 / r)) : null;
+  const q1 = rad(e.q[0]);
+  if (phi){
+    const [bx, by] = px(r, q1 + phi), [ax, ay] = px(r, q1);
+    g.push(`<line x1="${C}" y1="${C}" x2="${bx}" y2="${by}" stroke="var(--tinta-2)" stroke-width="1.4"
+             stroke-dasharray="4 3"/>`);
+    g.push(`<line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke="var(--acento)" stroke-width="1.4"/>`);
+    g.push(`<circle cx="${bx}" cy="${by}" r="2.6" fill="var(--tinta-2)"/>`);
+  }
+  const [tx, ty] = px(r, q1);
+  g.push(`<line x1="${C}" y1="${C}" x2="${tx}" y2="${ty}" stroke="var(--grafito)" stroke-width="3.4"
+           stroke-linecap="round"/>`);
+  g.push(`<circle cx="${tx}" cy="${ty}" r="3.4" fill="var(--papel)" stroke="var(--grafito)" stroke-width="2"/>`);
+  g.push(`<circle cx="${C}" cy="${C}" r="3" fill="var(--grafito)"/>`);
+  g.push(`<text x="${C}" y="192" font-size="11" fill="var(--tinta-2)" font-family="var(--dato)"
+           text-anchor="middle">vista en planta</text>`);
+  $('planta').innerHTML = g.join('');
+  $('plantaPie').textContent = phi
+    ? `girando la base ${num(gra(phi))}° los dos puntos quedan a 200 mm`
+    : 'radio demasiado chico para separar 200 mm';
+}
+
+/* ---------- matrices: la cascara se arma una vez ---------- */
+const NOMBRES = ['base', 'hombro', 'codo', 'muñeca'];
+const celdas = [];       // celdas[m][i*4+j]
+const titulos = [];
+function armarMatrices(){
+  const html = n => `<div class="mat"><h3 id="mt-${n}"></h3><div class="m" id="mm-${n}">` +
+    Array.from({ length: 16 }, (_, k) => {
+      const i = k >> 2, j = k & 3;
+      const cls = i < 3 && j === 3 ? 'tras' : (i < 3 && j < 3 ? 'rot' : '');
+      return `<span class="${cls}"></span>`;
+    }).join('') + '</div></div>';
+  $('mats').innerHTML = [0, 1, 2, 3].map(html).join('');
+  $('matT').innerHTML = html(4);
+  $('matD').innerHTML = html(5);
+  for (let m = 0; m < 6; m++){
+    celdas[m] = [...$('mm-' + m).children];
+    titulos[m] = $('mt-' + m);
+  }
+}
+function simbolico(fila){                              // la forma de A_i con su alpha sustituido
+  const [, , , al] = fila, ca = Math.cos(al), sa = Math.sin(al);
+  const f = (c, s) => {                                // c·cosθ + s·sinθ, simplificado
+    if (Math.abs(c) < 1e-9 && Math.abs(s) < 1e-9) return '0';
+    if (Math.abs(c) > 1e-9) return (c < 0 ? '−' : '') + 'cos θ';
+    return (s < 0 ? '−' : '') + 'sen θ';
+  };
+  return [[f(1, 0), f(-ca, 0) === '0' ? '0' : (ca > 0 ? '−sen θ' : 'sen θ'),
+           Math.abs(sa) < 1e-9 ? '0' : (sa > 0 ? 'sen θ' : '−sen θ'), 'a·cos θ'],
+          [f(0, 1), Math.abs(ca) < 1e-9 ? '0' : (ca > 0 ? 'cos θ' : '−cos θ'),
+           Math.abs(sa) < 1e-9 ? '0' : (sa > 0 ? '−cos θ' : 'cos θ'), 'a·sen θ'],
+          ['0', Math.abs(sa) < 1e-9 ? '0' : num(sa), Math.abs(ca) < 1e-9 ? '0' : num(ca), 'd'],
+          ['0', '0', '0', '1']];
+}
+let previas = null;
+function sensibilidad(q, j){                           // cuanto mueve el eje j a cada celda
+  const h = 0.004, a = q.slice(), b = q.slice();
+  a[j] -= h; b[j] += h;
+  const A = cadena(a.map(rad)), B = cadena(b.map(rad));
+  const d = [];
+  for (let m = 0; m < 4; m++) d[m] = A.As[m].map((f, i) => f.map((v, k) =>
+    Math.abs(B.As[m][i][k] - v) / (2*h)));
+  d[4] = A.Ts[4].map((f, i) => f.map((v, k) => Math.abs(B.Ts[4][i][k] - v) / (2*h)));
+  return d;
+}
+function pintarMatrices(e){
+  const acum = $('acum').checked, simb = $('simb').checked && !acum, d = $('dec3').checked ? 3 : 1;
+  const Ms = acum ? [e.Ts[1], e.Ts[2], e.Ts[3], e.Ts[4]] : e.As;
+  const sens = sensibilidad(e.q, estado.foco);
+  const fil = tablaDH(e.q.map(rad));
+  const tit = acum
+    ? ['T₁ = A₁ · hasta el hombro', 'T₂ = A₁A₂ · hasta el codo',
+       'T₃ = A₁A₂A₃ · hasta la muñeca', 'T₄ = A₁A₂A₃A₄ · hasta la punta']
+    : [`A₁ · base · θ = <b>${num(e.q[0], 1)}°</b>`,
+       `A₂ · hombro · θ = q2−90 = <b>${num(e.q[1] - 90, 1)}°</b>`,
+       `A₃ · codo · θ = <b>${num(e.q[2], 1)}°</b>`,
+       `A₄ · muñeca · θ = <b>${num(e.q[3], 1)}°</b>`];
+  const todas = [...Ms, e.Ts[4]];
+  for (let m = 0; m < 5; m++){
+    if (m < 4) titulos[m].innerHTML = tit[m];
+    const M = todas[m], sm = m < 4 && !acum ? simbolico(fil[m]) : null;
+    $('mm-' + m).classList.toggle('simb', simb && !!sm);
+    for (let k = 0; k < 16; k++){
+      const i = k >> 2, j = k & 3, cel = celdas[m][k], v = M[i][j];
+      cel.textContent = simb && sm ? sm[i][j] : num(v, d);
+      const antes = previas ? previas[m][i][j] : v;
+      const mueve = Math.abs(v - antes) > (d === 3 ? 0.002 : 0.05);
+      cel.classList.toggle('cambia', mueve);
+      const s = m < 4 && !acum ? sens[m][i][j] : sens[4][i][j];
+      cel.classList.toggle('dep', s > 0.02);
+    }
+  }
+  titulos[4].innerHTML = 'T = A₁A₂A₃A₄ · la última columna es la punta';
+  previas = todas.map(M => M.map(f => f.slice()));
+
+  if (estado.ref){
+    $('matD').hidden = false;
+    const D = e.Ts[4].map((f, i) => f.map((v, j) => v - estado.ref.T[i][j]));
+    titulos[5].innerHTML = 'T − T<sub>ref</sub> · lo que cambió desde la pose fijada';
+    for (let k = 0; k < 16; k++){
+      const i = k >> 2, j = k & 3;
+      celdas[5][k].textContent = num(D[i][j], d);
+      celdas[5][k].classList.toggle('cambia', Math.abs(D[i][j]) > 0.05);
+    }
+  } else $('matD').hidden = true;
+}
+
+/* ---------- lecturas ---------- */
+function pintar(){
+  const q = estado.q, { As, Ts } = cadena(q.map(rad)), geo = geometrica(q.map(rad));
+  const pts = articulaciones(rad(q[1]), rad(q[2]), rad(q[3])), choca = chocaCaja(pts);
+  const conVaso = estado.g < 0.25 && Math.abs(pts[3][0] - R_VASO) < 18 &&
+                  Math.abs(pts[3][1] - Z_GARRA) < 18;
+  const e = { q, g: estado.g, As, Ts, geo, pts, choca, conVaso };
+
+  EJES.forEach((id, i) => {
+    const o = $('o-' + id);
+    if (o) o.textContent = num(q[i], 1) + '°';
+    const fuera = q[i] < VENT[id][0] - 1e-6 || q[i] > VENT[id][1] + 1e-6;
+    $('fila-' + id).classList.toggle('fuera', fuera);
+    $('fila-' + id).classList.toggle('foco', estado.foco === i);
+    if (estado.modo === 'manual') $(id).value = q[i];
+  });
+  $('o-q5').textContent = num(PINZA_CERRADA + (PINZA_ABIERTA - PINZA_CERRADA) * estado.g) + ' mm';
+  if (estado.modo === 'manual') $('q5').value = estado.g * 100;
+
+  dibujarLateral(e); dibujarPlanta(e); pintarMatrices(e);
+
+  $('r-x').textContent = num(Ts[4][0][3]) + ' mm';
+  $('r-y').textContent = num(Ts[4][1][3]) + ' mm';
+  $('r-z').textContent = num(Ts[4][2][3]) + ' mm';
+  $('r-r').textContent = num(geo.r) + ' mm';
+  $('r-a').textContent = num(gra(geo.a234)) + '°';
+  $('r-mz').textContent = num(pts[2][1]) + ' mm';
+  $('r-g').textContent = conVaso ? 'con vaso' : (estado.g > .5 ? 'abierta' : 'cerrada');
+  $('r-v').textContent = num(estado.vPunta) + ' mm/s';
+
+  const dentro = dentroVentanas(q), horizontal = Math.abs(gra(geo.a234) - 90) < 0.6;
+  const chips = [
+    `<span class="chip ${dentro ? 'si' : 'no'}">${dentro ? 'dentro de las ventanas' : 'fuera de alguna ventana'}</span>`,
+    `<span class="chip ${choca ? 'no' : 'si'}">${choca ? 'guarda violada' : 'guarda cumplida'}</span>`,
+    `<span class="chip ${horizontal ? 'si' : 'neutro'}">${horizontal ? 'pinza horizontal' : 'pinza inclinada'}</span>`];
+  if (estado.modo === 'joystick'){
+    chips.push(`<span class="chip ${estado.rechazos ? 'no' : 'neutro'}">incrementos rechazados:
+      ${estado.rechazos}${estado.bloqueado ? ' · frena ' + estado.bloqueado : ''}</span>`);
+    chips.push(`<span class="chip ${Math.abs(estado.omega) > OMEGA_BASE + 1 ? 'no' : 'neutro'}">base
+      ${num(Math.abs(estado.omega))} °/s de ${OMEGA_BASE}</span>`);
+  }
+  $('estados').innerHTML = chips.join('');
+
+  const dif = Math.max(Math.abs(Ts[4][0][3] - geo.x), Math.abs(Ts[4][1][3] - geo.y),
+                       Math.abs(Ts[4][2][3] - geo.z));
+  $('control').innerHTML =
+    `control: la fórmula geométrica da r = ${num(geo.r, 1)} mm, z = ${num(geo.z, 1)} mm · ` +
+    `diferencia contra el producto de matrices <b>${dif.toExponential(1).replace('.', ',')} mm</b>`;
+
+  const fil = tablaDH(q.map(rad));
+  $('tabla').innerHTML = fil.map((f, i) => {
+    const th = [`q1 = ${num(q[0], 1)}°`, `q2 − 90° = ${num(q[1] - 90, 1)}°`,
+                `q3 = ${num(q[2], 1)}°`, `q4 = ${num(q[3], 1)}°`][i];
+    return `<tr${estado.foco === i ? ' class="activa"' : ''}><td class="n">${i + 1}</td>` +
+           `<td>${NOMBRES[i]}</td><td class="n">${th}</td><td class="n">${num(f[1])}</td>` +
+           `<td class="n">${num(f[2])}</td><td class="n">${num(gra(f[3]))}°</td></tr>`;
+  }).join('');
+}
+
+/* ---------- modo manual ---------- */
+function anchoVentanas(){
+  const libre = $('libre').checked;
+  for (const id of ['q2', 'q3', 'q4']){
+    const s = $(id), l = libre ? ANCHO[id] : VENT[id];
+    s.min = l[0]; s.max = l[1];
+    $('lim-' + id).textContent = `${num(VENT[id][0])}° a ${num(VENT[id][1])}°` + (libre ? ' · sin tope' : '');
+  }
+}
+function asistir(){
+  if ($('asistida').checked || $('asistida2').checked)
+    estado.q[3] = 90 - estado.q[1] - estado.q[2];
+}
+function poner(q1, q2, q3, q4, asistida, g){
+  if (!dentroVentanas([q1, q2, q3, q4])) $('libre').checked = true;
+  anchoVentanas();
+  $('asistida').checked = !!asistida;
+  $('asistida2').checked = !!asistida;
+  $('q4').disabled = !!asistida;
+  estado.q = [q1, q2, q3, q4];
+  if (g !== undefined) estado.g = g;
+  asistir();
+  estado.rastro = []; estado.vPunta = 0;
+  pintar();
+}
+const POSES = {
+  cero: () => poner(0, 0, 0, 0, false, 1),
+  horizontal: () => poner(0, 90, 0, 0, false, 1),
+  agarre: () => { const s = inversa(R_VASO, Z_GARRA); if (s) poner(35, s[0], s[1], s[2], true, 0); },
+  colision: () => poner(35, 110, 88, -108, true, 1)
+};
+document.querySelectorAll('[data-pose]').forEach(b =>
+  b.addEventListener('click', () => { POSES[b.dataset.pose](); detener(); }));
+
+EJES.forEach((id, i) => $(id).addEventListener('input', ev => {
+  estado.q[i] = +ev.target.value;
+  estado.foco = i; $('foco').value = i;
+  asistir(); estado.rastro = []; pintar();
+}));
+$('q5').addEventListener('input', ev => { estado.g = +ev.target.value / 100; pintar(); });
+$('asistida').addEventListener('change', ev => {
+  $('asistida2').checked = ev.target.checked;
+  $('q4').disabled = ev.target.checked; asistir(); pintar();
+});
+$('asistida2').addEventListener('change', ev => {
+  $('asistida').checked = ev.target.checked;
+  $('q4').disabled = ev.target.checked; asistir(); pintar();
+});
+$('libre').addEventListener('change', () => { anchoVentanas(); pintar(); });
+$('banda').addEventListener('change', pintar);
+['acum', 'simb', 'dec3'].forEach(id => $(id).addEventListener('change', () => { previas = null; pintar(); }));
+$('foco').addEventListener('change', ev => { estado.foco = +ev.target.value; pintar(); });
+
+$('resolver').addEventListener('click', () => {
+  const s = inversa(+$('invR').value, +$('invZ').value), msg = $('invMsg');
+  if (s){
+    poner(estado.q[0], s[0], s[1], s[2], true);
+    msg.textContent = `q2 = ${num(s[0], 1)}°, q3 = ${num(s[1], 1)}°, q4 = ${num(s[2], 1)}°`;
+    msg.style.color = 'var(--ok)';
+  } else { msg.textContent = 'sin solución dentro de las ventanas'; msg.style.color = 'var(--mal)'; }
+});
+
+/* ---------- modo joystick: el mando pide velocidad ---------- */
+const MANDOS = [
+  { eje: 0, nom: 'q1 · base', menos: 'A', mas: 'D' },
+  { eje: 1, nom: 'q2 · hombro', menos: 'W', mas: 'S' },
+  { eje: 2, nom: 'q3 · codo', menos: 'I', mas: 'K' },
+  { eje: 3, nom: 'q4 · muñeca', menos: 'J', mas: 'L' },
+  { eje: 4, nom: 'q5 · pinza', menos: 'O', mas: 'P' }];
+function armarPad(){
+  $('pad').innerHTML = MANDOS.map(m => `<div class="par">
+    <h4>${m.nom}<span>${m.menos} / ${m.mas}</span></h4>
+    <div class="bts">
+      <button type="button" data-eje="${m.eje}" data-signo="-1">−</button>
+      <button type="button" data-eje="${m.eje}" data-signo="1">+</button>
+    </div></div>`).join('');
+  $('pad').querySelectorAll('button').forEach(b => {
+    const eje = +b.dataset.eje, signo = +b.dataset.signo;
+    const on = ev => { ev.preventDefault(); estado.vel[eje] = signo; b.classList.add('activo'); arrancar(); };
+    const off = () => { if (estado.vel[eje] === signo) delete estado.vel[eje]; b.classList.remove('activo'); };
+    b.addEventListener('pointerdown', on);
+    b.addEventListener('pointerup', off);
+    b.addEventListener('pointerleave', off);
+    b.addEventListener('pointercancel', off);
+  });
+}
+const TECLAS = {};
+MANDOS.forEach(m => { TECLAS[m.menos.toLowerCase()] = [m.eje, -1]; TECLAS[m.mas.toLowerCase()] = [m.eje, 1]; });
+addEventListener('keydown', ev => {
+  if (estado.modo !== 'joystick' || ev.metaKey || ev.ctrlKey) return;
+  const t = TECLAS[ev.key.toLowerCase()];
+  if (!t) return;
+  ev.preventDefault(); estado.vel[t[0]] = t[1]; arrancar();
+});
+addEventListener('keyup', ev => {
+  const t = TECLAS[(ev.key || '').toLowerCase()];
+  if (t && estado.vel[t[0]] === t[1]) delete estado.vel[t[0]];
+});
+
+function pasoJoystick(dt){
+  const v = +$('vel').value;
+  estado.bloqueado = null; estado.omega = 0;
+  const antes = estado.q.slice(), ptsA = articulaciones(rad(antes[1]), rad(antes[2]), rad(antes[3]));
+  for (const [ejeStr, signo] of Object.entries(estado.vel)){
+    const eje = +ejeStr;
+    if (eje === 4){ estado.g = lim(estado.g + signo * dt * 1.2, 0, 1); continue; }
+    const id = EJES[eje], cand = estado.q.slice();
+    cand[eje] = lim(estado.q[eje] + signo * v * dt, VENT[id][0], VENT[id][1]);
+    if ($('asistida2').checked && eje !== 3) cand[3] = 90 - cand[1] - cand[2];
+    if (cand[3] < VENT.q4[0] || cand[3] > VENT.q4[1]){ estado.rechazos++; estado.bloqueado = 'q4'; continue; }
+    if (chocaGrados(cand)){ estado.rechazos++; estado.bloqueado = id; continue; }   // la guarda, antes
+    if (Math.abs(cand[eje] - estado.q[eje]) < 1e-9 && Math.abs(signo * v * dt) > 1e-9){
+      estado.rechazos++; estado.bloqueado = id + ' (tope)';
+    }
+    if (eje === 0) estado.omega = (cand[0] - estado.q[0]) / dt;
+    estado.q = cand;
+  }
+  const pts = articulaciones(rad(estado.q[1]), rad(estado.q[2]), rad(estado.q[3]));
+  const geoA = geometrica(antes.map(rad)), geoB = geometrica(estado.q.map(rad));
+  const dx = geoB.x - geoA.x, dy = geoB.y - geoA.y, dz = geoB.z - geoA.z;
+  estado.vPunta = Math.hypot(dx, dy, dz) / dt;
+  if ($('rastro').checked && Math.hypot(dx, dy, dz) > 0.4){
+    estado.rastro.push(pts[3]);
+    if (estado.rastro.length > 500) estado.rastro.shift();
+  }
+  return Object.keys(estado.vel).length > 0;
+}
+
+/* ---------- reloj unico ---------- */
+let corriendo = false, ultimo = 0, modoBarrido = null;
+function arrancar(){ if (!corriendo){ corriendo = true; ultimo = performance.now(); requestAnimationFrame(tic); } }
+function detener(){
+  corriendo = false; modoBarrido = null;
+  $('barrer').textContent = 'Barrer el hombro';
+}
+function tic(ahora){
+  if (!corriendo) return;
+  const dt = Math.min(0.05, (ahora - ultimo) / 1000);
+  ultimo = ahora;
+  let sigue = true;
+  if (estado.modo === 'joystick') { sigue = pasoJoystick(dt); pintar(); }
+  else if (modoBarrido){
+    modoBarrido.t += modoBarrido.dir * dt * 0.28;
+    if (modoBarrido.t > 1){ modoBarrido.t = 1; modoBarrido.dir = -1; }
+    if (modoBarrido.t < 0){ modoBarrido.t = 0; modoBarrido.dir = 1; }
+    estado.q[1] = VENT.q2[0] + (VENT.q2[1] - VENT.q2[0]) * modoBarrido.t;
+    asistir();
+    const p = articulaciones(rad(estado.q[1]), rad(estado.q[2]), rad(estado.q[3]));
+    estado.rastro.push(p[3]);
+    if (estado.rastro.length > 400) estado.rastro.shift();
+    pintar();
+  } else sigue = false;
+  if (sigue) requestAnimationFrame(tic); else detener();
+}
+
+$('barrer').addEventListener('click', () => {
+  if (modoBarrido){ detener(); return; }
+  $('asistida').checked = true; $('asistida2').checked = true; $('q4').disabled = true;
+  $('libre').checked = false; anchoVentanas();
+  estado.rastro = []; estado.foco = 1; $('foco').value = 1;
+  modoBarrido = { t: (estado.q[1] - VENT.q2[0]) / (VENT.q2[1] - VENT.q2[0]), dir: 1 };
+  $('barrer').textContent = 'Detener';
+  arrancar();
+});
+
+/* ---------- referencia y copia ---------- */
+$('fijar').addEventListener('click', () => {
+  if (estado.ref){ estado.ref = null; $('fijar').textContent = 'Fijar pose de referencia'; }
+  else {
+    estado.ref = { q: estado.q.slice(), g: estado.g, T: cadena(estado.q.map(rad)).Ts[4] };
+    $('fijar').textContent = 'Soltar referencia';
+  }
+  pintar();
+});
+$('copiar').addEventListener('click', async () => {
+  const { As, Ts } = cadena(estado.q.map(rad)), fil = tablaDH(estado.q.map(rad));
+  const tex = M => '\\begin{pmatrix}\n' + M.map(f => f.map(v => num(v, 3)
+    .replace(',', '.')).join(' & ')).join(' \\\\\n') + '\n\\end{pmatrix}';
+  const txt = [
+    `% brazo Grupo 3 — q = [${estado.q.map(v => num(v, 1)).join(', ')}] grados`,
+    ...fil.map((f, i) => `% fila ${i + 1} (${NOMBRES[i]}): theta=${num(gra(f[0]), 2)} d=${f[1]} a=${f[2]} alpha=${num(gra(f[3]))}`),
+    ...As.map((A, i) => `A_${i + 1} = ${tex(A)}`),
+    `T = ${tex(Ts[4])}`].join('\n');
+  const msg = $('copiaMsg');
+  try { await navigator.clipboard.writeText(txt); msg.textContent = 'copiado en LaTeX'; }
+  catch { const a = $('copiaAux'); a.value = txt; a.select(); msg.textContent = 'seleccionado: copialo con Ctrl+C'; }
+  msg.style.color = 'var(--ok)';
+  setTimeout(() => { msg.textContent = ''; }, 3000);
+});
+
+/* ---------- cambio de modo ---------- */
+function modo(m){
+  detener();
+  estado.modo = m;
+  document.querySelectorAll('[data-modo]').forEach(b =>
+    b.setAttribute('aria-pressed', String(b.dataset.modo === m)));
+  $('panel-manual').hidden = m !== 'manual';
+  $('panel-joystick').hidden = m !== 'joystick';
+  estado.rastro = []; estado.vel = {}; estado.vPunta = 0; estado.rechazos = 0;
+  if (m === 'joystick'){
+    $('asistida2').checked = $('asistida').checked;
+    const s = inversa(R_VASO, 150);
+    if (s && !dentroVentanas([estado.q[0], ...s])) estado.q = [estado.q[0], s[0], s[1], s[2]];
+    pintar();
+  } else pintar();
+}
+document.querySelectorAll('[data-modo]').forEach(b =>
+  b.addEventListener('click', () => modo(b.dataset.modo)));
+$('vel').addEventListener('input', ev => { $('o-vel').textContent = ev.target.value + ' °/s'; });
+
+/* ---------- arranque ---------- */
+armarMatrices(); armarPad(); fondoSVG(); anchoVentanas();
+$('o-vel').textContent = $('vel').value + ' °/s';
+$('q4').disabled = true;
+$('foco').value = 1;
+pintar();
+</script>
