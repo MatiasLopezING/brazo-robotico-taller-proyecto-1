@@ -1,0 +1,10 @@
+# Guarda la pose ACTUAL del brazo con un nombre.
+#
+# Se guardan angulos de articulacion y no coordenadas (ADR-011): reproducir una
+# pose memorizada no necesita inversa, no puede fallar por alcance y no arrastra
+# el error del modelo.
+string nombre
+---
+bool exito
+string motivo
+float64[] q                      # [grados] lo que quedo guardado

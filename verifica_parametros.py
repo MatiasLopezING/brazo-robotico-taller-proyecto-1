@@ -22,9 +22,12 @@ import brazo_parametros as P   # noqa: E402
 PAQUETE = RAIZ / 'ros2_ws' / 'src' / 'brazo_description'
 URDF = PAQUETE / 'urdf' / 'brazo.urdf'
 NODO = PAQUETE / 'scripts' / 'tarea.py'
-HTML = next((p for p in (RAIZ / 'Wiki' / 'dh-brazo.html',
-                         RAIZ / 'herramientas' / 'dh-brazo.html') if p.exists()), None)
-CUADERNOS = [RAIZ / 'Cinematica_brazo.ipynb', RAIZ / 'Jacobiano_brazo.ipynb']
+CONTROL = (RAIZ / 'ros2_ws' / 'src' / 'brazo_control' / 'brazo_control'
+           / 'cinematica.py')
+PAGINAS = [p for p in (RAIZ / 'Wiki' / 'dh-brazo.html',
+                       RAIZ / 'Wiki' / 'inversa-brazo.html') if p.exists()]
+CUADERNOS = [RAIZ / 'Cinematica_brazo.ipynb', RAIZ / 'Jacobiano_brazo.ipynb',
+             RAIZ / 'Cinematica_inversa_brazo.ipynb']
 
 fallas, revisados = [], 0
 
@@ -100,20 +103,43 @@ def main():
         revisar(NODO.name, f'ventana {eje}',
                 rf"'{eje}': \((-?[\d.]+), (-?[\d.]+)\)", P.VENTANAS[eje], t)
 
-    # ---------------- la pagina HTML ----------------
-    t = texto(HTML)
-    print(f"\n{HTML.name if HTML else 'dh-brazo.html'} (en mm)")
-    revisar('dh-brazo.html', 'eslabones',
-            r'const L1 = ([\d.]+), L2 = ([\d.]+), L3 = ([\d.]+)', (P.L1, P.L2, P.L3), t)
-    revisar('dh-brazo.html', 'altura del hombro', r'H_HOMBRO = ([\d.]+)', P.H_HOMBRO, t)
-    revisar('dh-brazo.html', 'caja', r'CAJA_W = ([\d.]+), CAJA_D = ([\d.]+), CAJA_H = ([\d.]+)',
-            (P.CAJA_W, P.CAJA_D, P.CAJA_H), t)
-    revisar('dh-brazo.html', 'altura de agarre y vaso',
-            r'Z_GARRA = ([\d.]+), VASO_D = ([\d.]+), VASO_H = ([\d.]+)',
-            (P.Z_GARRA, P.VASO_D, P.VASO_H), t)
-    for eje, clave in (('hombro', 'q2'), ('codo', 'q3'), ('muneca', 'q4')):
-        revisar('dh-brazo.html', f'ventana {eje}',
-                rf'{clave}: \[(-?[\d.]+), (-?[\d.]+)\]', P.VENTANAS[eje], t)
+    # ---------------- la biblioteca del paquete de control ----------------
+    t = texto(CONTROL)
+    print(f"\n{CONTROL.name} (en m)")
+    revisar(CONTROL.name, 'eslabones', r'L1, L2, L3 = ([\d.]+), ([\d.]+), ([\d.]+)',
+            (P.L1/1000, P.L2/1000, P.L3/1000), t)
+    revisar(CONTROL.name, 'altura del hombro', r'H_HOMBRO = ([\d.]+)',
+            P.H_HOMBRO/1000, t)
+    revisar(CONTROL.name, 'caja y guarda', r'CAJA_H, R_GUARDA = ([\d.]+), ([\d.]+)',
+            (P.CAJA_H/1000, P.R_GUARDA/1000), t)
+    revisar(CONTROL.name, 'altura de agarre', r'Z_GARRA = ([\d.]+)', P.Z_GARRA/1000, t)
+    for eje in ('base', 'hombro', 'codo', 'muneca'):
+        revisar(CONTROL.name, f'ventana {eje}',
+                rf"'{eje}': \((-?[\d.]+), (-?[\d.]+)\)", P.VENTANAS[eje], t)
+        revisar(CONTROL.name, f'velocidad {eje}',
+                rf"'{eje}': ([\d.]+)(?=[,}}])", P.vel_junta(eje),
+                (t or '').split('VEL_MAX')[-1] if t else None)
+
+    # ---------------- las paginas HTML ----------------
+    for pagina in PAGINAS:
+        t = texto(pagina)
+        nom = pagina.name
+        print(f"\n{nom} (en mm)")
+        revisar(nom, 'eslabones',
+                r'const L1 = ([\d.]+), L2 = ([\d.]+), L3 = ([\d.]+)', (P.L1, P.L2, P.L3), t)
+        revisar(nom, 'altura del hombro', r'H_HOMBRO = ([\d.]+)', P.H_HOMBRO, t)
+        revisar(nom, 'caja', r'CAJA_W = ([\d.]+), CAJA_D = ([\d.]+), CAJA_H = ([\d.]+)',
+                (P.CAJA_W, P.CAJA_D, P.CAJA_H), t)
+        if t and 'R_GUARDA = Math.ceil' in t:
+            # esa pagina la deriva del radio de esquina en vez de escribirla
+            print(f"  {'guarda':<30}{'derivada de R_CAJA':>18}")
+        else:
+            revisar(nom, 'guarda', r'R_GUARDA = ([\d.]+)', P.R_GUARDA, t)
+        revisar(nom, 'altura de agarre', r'Z_GARRA = ([\d.]+)', P.Z_GARRA, t)
+        for eje in ('hombro', 'codo', 'muneca'):
+            clave = {'hombro': 'q2', 'codo': 'q3', 'muneca': 'q4'}[eje]
+            revisar(nom, f'ventana {eje}',
+                    rf'(?:{clave}|{eje}): \[(-?[\d.]+), (-?[\d.]+)\]', P.VENTANAS[eje], t)
 
     # ---------------- los cuadernos ----------------
     for cuaderno in CUADERNOS:

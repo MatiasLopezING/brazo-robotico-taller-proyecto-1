@@ -1,0 +1,6 @@
+# Reproduce una pose guardada, interpolando con el mismo perfil suave.
+string nombre
+float64 duracion_s               # 0 = la minima que respeta el tope de aceleracion
+---
+bool exito
+string motivo

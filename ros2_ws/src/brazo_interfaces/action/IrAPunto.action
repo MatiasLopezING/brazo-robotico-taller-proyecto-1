@@ -1,0 +1,19 @@
+# Lleva la punta del brazo (TCP) a un punto del espacio.
+#
+# El servidor resuelve la cinematica inversa cerrada, arma una trayectoria suave
+# de quinto orden y la ejecuta. Si el punto no es alcanzable RECHAZA la meta y
+# dice por que (ADR-011): no satura al borde ni inventa una pose.
+
+# --- meta ---
+geometry_msgs/Point punto        # [m] en el marco base_link
+float64 alfa_grados              # orientacion de la pinza; 90 = horizontal
+float64 duracion_s               # 0 = la minima que respeta el tope de aceleracion
+---
+# --- resultado ---
+bool exito
+string motivo                    # 'ok' o la razon del rechazo
+float64[] q_final                # [grados] base, hombro, codo, muneca
+---
+# --- realimentacion ---
+float64 progreso                 # 0 a 1
+float64[] q_actual               # [grados]

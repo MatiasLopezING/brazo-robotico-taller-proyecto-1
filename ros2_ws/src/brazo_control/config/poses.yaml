@@ -1,0 +1,6 @@
+# Poses memorizadas, en grados: base, hombro, codo, muneca.
+# Las escribe y las lee el servicio memorizar_pose; se guardan ANGULOS y no
+# coordenadas, de modo que reproducirlas no necesita cinematica inversa.
+reposo: [0.0, 50.0, 0.0, 40.0]
+agarre: [35.0, 94.249, 63.557, -67.806]
+deposito: [82.0, 94.249, 63.557, -67.806]
