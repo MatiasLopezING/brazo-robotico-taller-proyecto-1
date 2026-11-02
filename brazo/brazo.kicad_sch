@@ -3154,10 +3154,6 @@
 		(uuid "e2d5e057-1dd3-468c-9081-14cff5049cc8")
 	)
 	(no_connect
-		(at 177.8 73.66)
-		(uuid "e79b3cc0-0350-4798-aeee-5c9fef4e9c7a")
-	)
-	(no_connect
 		(at 177.8 104.14)
 		(uuid "f1491634-dbcc-46d4-8e53-e135fa8bed9f")
 	)
@@ -3272,6 +3268,16 @@
 			(type default)
 		)
 		(uuid "282b6250-fe05-4135-8a57-bedeb1ddbcbd")
+	)
+	(wire
+		(pts
+			(xy 168.91 71.12) (xy 168.91 73.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2ceb8bfa-53e7-4520-8400-745a2a32f9b5")
 	)
 	(wire
 		(pts
@@ -3702,6 +3708,16 @@
 			(type default)
 		)
 		(uuid "e11a9071-c59b-410c-82bf-1fdc3d8c0edf")
+	)
+	(wire
+		(pts
+			(xy 177.8 73.66) (xy 168.91 73.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e2695306-ac3a-4450-8d42-1689c3b5a546")
 	)
 	(wire
 		(pts
@@ -6355,6 +6371,84 @@
 			(project "brazo"
 				(path "/46a8edc4-559a-4d83-882b-608c5862d7ba"
 					(reference "J_JOY_A1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:+3.3V")
+		(at 168.91 71.12 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "d7841ace-339f-4ddb-932f-8d8cdfd4f32c")
+		(property "Reference" "#PWR04"
+			(at 168.91 74.93 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "+3.3V"
+			(at 168.91 66.04 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 168.91 71.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 168.91 71.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+3.3V\""
+			(at 168.91 71.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "ae19bd03-ee69-4f23-b9f8-82f60ed7658e")
+		)
+		(instances
+			(project "brazo"
+				(path "/46a8edc4-559a-4d83-882b-608c5862d7ba"
+					(reference "#PWR04")
 					(unit 1)
 				)
 			)
