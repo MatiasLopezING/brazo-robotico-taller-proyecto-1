@@ -30,3 +30,10 @@ desktop.ini
 # Wiki (repos git separados — no trackear desde el repo principal)
 Wiki/wiki-git/
 Wiki/wiki/
+
+# Animaciones (los videos se generan; pesan decenas de MB)
+video/media/
+
+# Python (bytecode generado)
+__pycache__/
+*.py[cod]

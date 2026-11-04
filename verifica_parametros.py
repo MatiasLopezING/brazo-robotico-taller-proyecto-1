@@ -28,6 +28,7 @@ PAGINAS = [p for p in (RAIZ / 'Wiki' / 'dh-brazo.html',
                        RAIZ / 'Wiki' / 'inversa-brazo.html') if p.exists()]
 CUADERNOS = [RAIZ / 'Cinematica_brazo.ipynb', RAIZ / 'Jacobiano_brazo.ipynb',
              RAIZ / 'Cinematica_inversa_brazo.ipynb']
+VIDEO = RAIZ / 'video' / 'brazo_anim.py'
 
 fallas, revisados = [], 0
 
@@ -140,6 +141,24 @@ def main():
             clave = {'hombro': 'q2', 'codo': 'q3', 'muneca': 'q4'}[eje]
             revisar(nom, f'ventana {eje}',
                     rf'(?:{clave}|{eje}): \[(-?[\d.]+), (-?[\d.]+)\]', P.VENTANAS[eje], t)
+
+    # ---------------- la cinematica de las animaciones ----------------
+    t = texto(VIDEO)
+    print(f"\n{VIDEO.name} (en m)")
+    revisar(VIDEO.name, 'eslabones', r'L1, L2, L3 = ([\d.]+), ([\d.]+), ([\d.]+)',
+            (P.L1/1000, P.L2/1000, P.L3/1000), t)
+    revisar(VIDEO.name, 'altura del hombro', r'H_HOMBRO = ([\d.]+)',
+            P.H_HOMBRO/1000, t)
+    revisar(VIDEO.name, 'caja', r'CAJA_W, CAJA_D, CAJA_H = ([\d.]+), ([\d.]+), ([\d.]+)',
+            (P.CAJA_W/1000, P.CAJA_D/1000, P.CAJA_H/1000), t)
+    revisar(VIDEO.name, 'guarda', r'R_GUARDA = ([\d.]+)', P.R_GUARDA/1000, t)
+    revisar(VIDEO.name, 'garra y vaso',
+            r'Z_GARRA, VASO_D, VASO_H = ([\d.]+), ([\d.]+), ([\d.]+)',
+            (P.Z_GARRA/1000, P.VASO_D/1000, P.VASO_H/1000), t)
+    revisar(VIDEO.name, 'radio de la tarea', r'R_VASO = ([\d.]+)', P.R_VASO/1000, t)
+    for eje in ('base', 'hombro', 'codo', 'muneca'):
+        revisar(VIDEO.name, f'ventana {eje}',
+                rf"'{eje}': \((-?[\d.]+), (-?[\d.]+)\)", P.VENTANAS[eje], t)
 
     # ---------------- los cuadernos ----------------
     for cuaderno in CUADERNOS:
