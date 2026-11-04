@@ -1,0 +1,598 @@
+<title>Inversa paso a paso</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: el plano del brazo a la izquierda, la construccion paso a paso a la
+   derecha; una columna en el telefono. Mismo juego de tokens que la pagina de
+   Denavit-Hartenberg, para que se lean como un par. */
+:root{
+  --papel:#f4f5f3; --papel-2:#e9ebe6; --tinta:#1c2024; --tinta-2:#5d6670;
+  --linea:#c9cec6; --acento:#9a5b14; --acento-suave:#f0dcc2;
+  --ok:#1d6b52; --mal:#a3291f; --mal-suave:#f6ddd8;
+  --rama-a:#1b4f9c; --rama-b:#8d5bb5; --objetivo:#b3261e;
+  --grafito:#3a4047; --guarda:#b3261e;
+  --mapa-ok:#9ec6a4; --mapa-caja:#e8a9a0; --mapa-vent:#f0d2a0; --mapa-lejos:#e4e7e1;
+  --display:"IBM Plex Sans Condensed",system-ui,sans-serif;
+  --cuerpo:"IBM Plex Sans",system-ui,sans-serif;
+  --dato:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --papel:#14181b; --papel-2:#1d2226; --tinta:#e8ebe6; --tinta-2:#99a3ac;
+  --linea:#333c43; --acento:#e0a05a; --acento-suave:#4a3318;
+  --ok:#6cc39d; --mal:#ef8276; --mal-suave:#4a1f1a;
+  --rama-a:#7eaaf0; --rama-b:#c39ae0; --objetivo:#ef8276;
+  --grafito:#b6bec6; --guarda:#ef8276;
+  --mapa-ok:#2c4a35; --mapa-caja:#4a2420; --mapa-vent:#4a3a1c; --mapa-lejos:#20262a;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --papel:#14181b; --papel-2:#1d2226; --tinta:#e8ebe6; --tinta-2:#99a3ac;
+  --linea:#333c43; --acento:#e0a05a; --acento-suave:#4a3318;
+  --ok:#6cc39d; --mal:#ef8276; --mal-suave:#4a1f1a;
+  --rama-a:#7eaaf0; --rama-b:#c39ae0; --objetivo:#ef8276;
+  --grafito:#b6bec6; --guarda:#ef8276;
+  --mapa-ok:#2c4a35; --mapa-caja:#4a2420; --mapa-vent:#4a3a1c; --mapa-lejos:#20262a;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--papel);color:var(--tinta);font-family:var(--cuerpo);line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:26px 48px;margin:0}
+.hoja{max-width:1180px;margin:0 auto}
+h1{font-family:var(--display);font-size:clamp(1.5rem,4vw,2.1rem);font-weight:700;margin:0 0 2px;
+  letter-spacing:-.01em;text-wrap:balance}
+.bajada{color:var(--tinta-2);margin:0 0 18px;max-width:64ch;font-size:.95rem}
+h2{font-family:var(--display);font-size:1.02rem;font-weight:600;margin:0 0 10px;
+  text-transform:uppercase;letter-spacing:.07em;color:var(--tinta-2)}
+.tablero{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:920px){.tablero{grid-template-columns:1fr}}
+.caja{background:var(--papel-2);border:1px solid var(--linea);border-radius:4px;padding:14px;min-width:0}
+.caja+.caja{margin-top:16px}
+figure{margin:0}
+.lienzo{position:relative;width:100%;aspect-ratio:460/430;touch-action:none;cursor:crosshair}
+.lienzo canvas,.lienzo svg{position:absolute;inset:0;width:100%;height:100%}
+.epigrafe{font-size:.78rem;color:var(--tinta-2);margin-top:8px;font-family:var(--dato)}
+.leyenda{display:flex;flex-wrap:wrap;gap:11px;font-size:.76rem;color:var(--tinta-2);margin-top:9px;
+  font-family:var(--dato)}
+.leyenda i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+
+.pasos{display:flex;gap:0;border:1px solid var(--linea);border-radius:3px;overflow:hidden;margin-bottom:12px}
+.pasos button{flex:1;border:0;border-right:1px solid var(--linea);border-radius:0;background:var(--papel);
+  padding:7px 4px;font-size:.78rem;color:var(--tinta-2);cursor:pointer;font-family:var(--cuerpo)}
+.pasos button:last-child{border-right:0}
+.pasos button[aria-pressed=true]{background:var(--acento);color:var(--papel);font-weight:600}
+.titulo-paso{font-family:var(--display);font-size:1.05rem;font-weight:600;margin:0 0 6px}
+.cuenta{font-family:var(--dato);font-size:.82rem;background:var(--papel);border:1px solid var(--linea);
+  border-radius:3px;padding:9px 10px;margin:8px 0;white-space:pre-wrap;overflow-x:auto}
+.cuenta b{color:var(--acento);font-weight:600}
+.explica{font-size:.88rem;color:var(--tinta-2);margin:0}
+.explica strong{color:var(--tinta)}
+.nav{display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap}
+button{font-family:var(--cuerpo);font-size:.83rem;padding:7px 10px;border-radius:3px;cursor:pointer;
+  border:1px solid var(--linea);background:var(--papel);color:var(--tinta)}
+button:hover{border-color:var(--acento);color:var(--acento)}
+button.fuerte{background:var(--acento);border-color:var(--acento);color:var(--papel)}
+button.fuerte:hover{color:var(--papel);opacity:.92}
+button:disabled{opacity:.4;cursor:default}
+:focus-visible{outline:2px solid var(--acento);outline-offset:2px}
+
+.ejes{display:grid;gap:7px;margin-top:4px}
+.eje{display:grid;grid-template-columns:62px minmax(0,1fr) 74px;gap:9px;align-items:center;font-size:.82rem}
+.barra{position:relative;height:13px;background:var(--papel);border:1px solid var(--linea);border-radius:2px}
+.barra i{position:absolute;top:-2px;width:3px;height:15px;background:var(--acento);border-radius:1px}
+.barra u{position:absolute;top:0;bottom:0;background:var(--acento-suave);text-decoration:none}
+.eje output{font-family:var(--dato);text-align:right;font-variant-numeric:tabular-nums}
+.eje.mal output{color:var(--mal);font-weight:600}
+.eje.mal .barra i{background:var(--mal)}
+
+.lecturas{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:1px;background:var(--linea);
+  border:1px solid var(--linea);border-radius:3px;overflow:hidden;margin-top:4px}
+.lecturas div{background:var(--papel-2);padding:7px 9px}
+.lecturas dt{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--tinta-2)}
+.lecturas dd{margin:2px 0 0;font-family:var(--dato);font-size:.98rem;font-variant-numeric:tabular-nums}
+.chip{font-family:var(--dato);font-size:.78rem;padding:5px 10px;border-radius:999px;border:1px solid;
+  display:inline-block;margin-top:10px}
+.chip.si{color:var(--ok);border-color:var(--ok)}
+.chip.no{color:var(--mal);border-color:var(--mal);background:var(--mal-suave)}
+.ramas{display:grid;gap:8px;margin-top:4px}
+.rama{border:1px solid var(--linea);border-left-width:4px;border-radius:3px;padding:8px 10px;
+  background:var(--papel);font-size:.82rem}
+.rama h4{margin:0 0 3px;font-size:.84rem;font-family:var(--dato)}
+.rama .q{font-family:var(--dato);font-variant-numeric:tabular-nums;color:var(--tinta-2)}
+.rama .por{font-size:.79rem;margin-top:3px}
+.rama.usada{border-left-color:var(--rama-a)}
+.rama.usada .por{color:var(--ok)}
+.rama.descartada{border-left-color:var(--rama-b);opacity:.92}
+.rama.descartada .por{color:var(--mal)}
+
+.opciones{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:.84rem;align-items:center}
+.opciones label{display:inline-flex;gap:6px;align-items:center}
+input[type=checkbox]{accent-color:var(--acento)}
+input[type=range]{accent-color:var(--acento);min-width:0;flex:1}
+.alfa{display:grid;grid-template-columns:76px minmax(0,1fr) 54px;gap:9px;align-items:center;margin-top:10px}
+.alfa label{font-size:.84rem}
+.alfa output{font-family:var(--dato);text-align:right;font-size:.86rem}
+.alfa .lim{display:block;font-size:.71rem;color:var(--tinta-2);font-family:var(--dato)}
+.poses{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+table{border-collapse:collapse;width:100%;font-size:.84rem}
+td{padding:6px 8px;border-bottom:1px solid var(--linea);vertical-align:top}
+tr:last-child td{border-bottom:0}
+.pie{margin-top:28px;font-size:.79rem;color:var(--tinta-2);border-top:1px solid var(--linea);padding-top:12px}
+</style>
+
+<div class="hoja">
+  <h1>Inversa paso a paso</h1>
+  <p class="bajada">Acá el flujo va al revés que en la página de Denavit-Hartenberg: en vez de mover
+    los ejes y mirar dónde cae la punta, <strong>marcás el punto</strong> y el brazo se resuelve solo,
+    mostrando la construcción geométrica que hay detrás del álgebra. Tocá o arrastrá sobre el plano
+    para elegir el objetivo.</p>
+
+  <div class="tablero">
+    <section>
+      <div class="caja">
+        <figure>
+          <div class="lienzo" id="lienzo">
+            <canvas id="mapa" width="920" height="860"></canvas>
+            <svg id="dibujo" viewBox="0 0 460 430" role="img"
+                 aria-label="Construcción de la cinemática inversa en el plano del brazo"></svg>
+          </div>
+          <figcaption class="epigrafe" id="epigrafe"></figcaption>
+        </figure>
+        <p class="leyenda">
+          <span><i style="background:var(--mapa-ok)"></i>alcanzable</span>
+          <span><i style="background:var(--mapa-caja)"></i>chocaría la caja</span>
+          <span><i style="background:var(--mapa-vent)"></i>fuera de ventana</span>
+          <span><i style="background:var(--mapa-lejos)"></i>fuera de alcance</span>
+          <span><i style="background:var(--rama-b)"></i>rama descartada</span>
+        </p>
+        <div class="opciones">
+          <label><input type="checkbox" id="verMapa" checked> mapa de alcanzabilidad</label>
+          <label><input type="checkbox" id="verRama" checked> dibujar la rama descartada</label>
+          <label><input type="checkbox" id="verCirculos" checked> círculos de la construcción</label>
+        </div>
+        <div class="alfa">
+          <label for="alfa">α de la pinza<span class="lim" id="limAlfa"></span></label>
+          <input type="range" id="alfa" min="40" max="140" step="1" value="90">
+          <output id="o-alfa"></output>
+        </div>
+        <div class="alfa">
+          <label for="q1">q1, la base<span class="lim">no interviene en el plano</span></label>
+          <input type="range" id="q1" min="-180" max="180" step="1" value="35">
+          <output id="o-q1"></output>
+        </div>
+        <div class="poses">
+          <button type="button" data-punto="250,70">Agarre a r = 250</button>
+          <button type="button" data-punto="288,70">Borde exterior</button>
+          <button type="button" data-punto="197,70">Contra la caja</button>
+          <button type="button" data-punto="320,70">Fuera de alcance</button>
+          <button type="button" data-punto="250,170">Traslado alto</button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="caja">
+        <div class="pasos" role="group" aria-label="Paso de la construcción">
+          <button type="button" data-paso="1" aria-pressed="false">1 base</button>
+          <button type="button" data-paso="2" aria-pressed="false">2 muñeca</button>
+          <button type="button" data-paso="3" aria-pressed="false">3 triángulo</button>
+          <button type="button" data-paso="4" aria-pressed="false">4 ramas</button>
+          <button type="button" data-paso="5" aria-pressed="true">5 filtros</button>
+        </div>
+        <h3 class="titulo-paso" id="tituloPaso"></h3>
+        <p class="explica" id="explicaPaso"></p>
+        <div class="cuenta" id="cuentaPaso"></div>
+        <div class="nav">
+          <button type="button" id="anterior">◀ anterior</button>
+          <button type="button" id="siguiente" class="fuerte">siguiente ▶</button>
+          <span class="epigrafe" id="contador"></span>
+        </div>
+      </div>
+
+      <div class="caja">
+        <h2>Las dos ramas</h2>
+        <div class="ramas" id="ramas"></div>
+      </div>
+
+      <div class="caja">
+        <h2>Resultado</h2>
+        <div class="ejes" id="ejes"></div>
+        <dl class="lecturas">
+          <div><dt>radio r</dt><dd id="r-r"></dd></div>
+          <div><dt>altura z</dt><dd id="r-z"></dd></div>
+          <div><dt>x, y</dt><dd id="r-xy"></dd></div>
+          <div><dt>dureza</dt><dd id="r-dureza"></dd></div>
+        </dl>
+        <div id="estado"></div>
+        <p class="epigrafe" id="control"></p>
+      </div>
+    </section>
+  </div>
+
+  <div class="caja" style="margin-top:22px">
+    <h2>Qué conviene mirar</h2>
+    <table>
+      <tbody>
+        <tr><td><strong>Los dos círculos son la inversa.</strong> Uno tiene radio L1 y centro en el
+          hombro; el otro, radio L2 y centro en la muñeca. El codo está a L1 del hombro y a L2 de la
+          muñeca, así que <em>tiene</em> que estar donde se cruzan. Por eso hay dos soluciones: dos
+          intersecciones. Alejá el objetivo y mirá cómo los círculos se van separando hasta tocarse en
+          un solo punto —ahí el brazo queda estirado, que es la <em>singularidad de codo</em>— y
+          después ya no se cortan: no hay solución.</td></tr>
+        <tr><td><strong>La rama violeta nunca sirve.</strong> Dibujala con el interruptor y mirá qué
+          ángulo pide: siempre un hombro de más de 130°, contra un tope de 110°. La ventana del codo
+          va de 0° a 120° y esa rama necesita codo negativo. Por eso el firmware no tiene que elegir
+          entre dos soluciones: sólo una existe.</td></tr>
+        <tr><td><strong>El color del fondo dice por qué no se puede.</strong> No es lo mismo que al
+          brazo le falte largo —gris— a que un tope no lo deje —naranja— o a que chocaría contra su
+          propia base —rojo—. Los tres bordes de la zona verde los pone algo distinto.</td></tr>
+        <tr><td><strong>α es un grado de libertad, pero sólo con la pinza vacía.</strong> Movelo y vas
+          a ver aparecer soluciones donde con 90° no había. Con el vaso tomado tiene que ser 90° o el
+          líquido se derrama: ahí el brazo deja de ser redundante.</td></tr>
+        <tr><td><strong>La dureza crece contra el borde.</strong> En el medio de la banda un grado de
+          codo mueve la punta casi dos milímetros; en el borde exterior hacen falta más de dos grados
+          por milímetro. Es el número de condición del jacobiano, dicho en unidades que se palpan.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="pie">Taller de Proyecto I (E0306) · Grupo N.º 3 · Matias Lopez (02670/0). La cuenta es la
+    misma de <code>Cinematica_inversa_brazo.ipynb</code> y del paquete <code>brazo_control</code>. El
+    control de abajo a la derecha aplica la cinemática directa al resultado y compara con el punto
+    pedido, en cada cuadro.</p>
+</div>
+
+<script>
+'use strict';
+const L1 = 120, L2 = 120, L3 = 85, H_HOMBRO = 190;
+const CAJA_W = 164, CAJA_D = 154, CAJA_H = 100, R_GUARDA = 113;
+const Z_GARRA = 70, VASO_D = 55, VASO_H = 90;
+const VENT = { base: [-180, 180], hombro: [50, 110], codo: [0, 120], muneca: [-108, 40] };
+const NOMBRES = ['base', 'hombro', 'codo', 'muneca'];
+const rad = g => g*Math.PI/180, gra = r => r*180/Math.PI;
+const lim = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/* ---------- la cinematica, igual que en el cuaderno ---------- */
+function articulaciones(q2, q3, q4){
+  const a23 = q2 + q3, a234 = a23 + q4;
+  const codo = [L1*Math.sin(q2), H_HOMBRO + L1*Math.cos(q2)];
+  const mun = [codo[0] + L2*Math.sin(a23), codo[1] + L2*Math.cos(a23)];
+  return [[0, H_HOMBRO], codo, mun,
+          [mun[0] + L3*Math.sin(a234), mun[1] + L3*Math.cos(a234)]];
+}
+const libre = (q2, q3, q4) => articulaciones(q2, q3, q4)
+  .every(([r, z]) => z >= 0 && !(z < CAJA_H && Math.abs(r) < R_GUARDA));
+const fueraDeVentana = q => NOMBRES.filter((n, i) =>
+  q[i] < VENT[n][0] - 1e-9 || q[i] > VENT[n][1] + 1e-9);
+
+function construir(r, z, alfa, q1){
+  /* Todas las cantidades intermedias, que es lo que la pagina dibuja. */
+  const a = rad(alfa);
+  const rm = r - L3*Math.sin(a), zm = z - L3*Math.cos(a);     // desacople
+  const d = Math.hypot(rm, zm - H_HOMBRO);
+  const paso = { q1, r, z, alfa, rm, zm, d, alcanza: d <= L1 + L2, ramas: [],
+                 elegida: null, motivo: 'fuera de alcance' };
+  if (!paso.alcanza) return paso;
+  paso.semi = Math.acos(Math.min(1, d/(L1 + L2)));
+  paso.medio = Math.atan2(rm, zm - H_HOMBRO);
+  for (const s of [1, -1]){
+    const q2 = paso.medio - s*paso.semi, q3 = 2*s*paso.semi, q4 = a - q2 - q3;
+    const q = [q1, gra(q2), gra(q3), gra(q4)];
+    const fuera = fueraDeVentana(q);
+    const choca = !fuera.length && !libre(q2, q3, q4);
+    paso.ramas.push({
+      nombre: s > 0 ? 'codo abajo' : 'codo arriba', q, codo: articulaciones(q2, q3, q4)[1],
+      pts: articulaciones(q2, q3, q4), sirve: !fuera.length && !choca,
+      motivo: fuera.length ? 'fuera de ventana: ' + fuera.join(', ')
+              : choca ? 'el brazo chocaría la caja' : 'ok'
+    });
+  }
+  paso.elegida = paso.ramas.find(b => b.sirve) || null;
+  paso.motivo = paso.elegida ? 'ok'
+    : (paso.ramas.find(b => b.motivo.startsWith('el brazo')) || paso.ramas[0]).motivo;
+  return paso;
+}
+function estadoPunto(r, z, alfa){      // 0 util 1 caja 2 ventana 3 alcance
+  const c = construir(r, z, alfa, 0);
+  if (!c.alcanza) return 3;
+  if (c.elegida) return 0;
+  return c.ramas.some(b => b.motivo.startsWith('el brazo')) ? 1 : 2;
+}
+function rangoAlfa(r, z){
+  const ok = [];
+  for (let a = 40; a <= 140; a += 1) if (estadoPunto(r, z, a) === 0) ok.push(a);
+  return ok.length ? [ok[0], ok[ok.length - 1]] : null;
+}
+function dureza(r, z, alfa){           // grados de codo por milimetro de punta
+  const a = construir(r, z, alfa, 0), b = construir(r - 1, z, alfa, 0);
+  if (!a.elegida || !b.elegida) return null;
+  return Math.abs(a.elegida.q[2] - b.elegida.q[2]);
+}
+
+/* ---------- dibujo ---------- */
+const OFF_R = 60, OFF_Z = 400, ANCHO = 460, ALTO = 430;
+const X = r => r + OFF_R, Y = z => OFF_Z - z;
+const num = (v, d = 0) => (Math.abs(v) < 5e-4 ? 0 : v).toFixed(d).replace('.', ',');
+const $ = id => document.getElementById(id);
+
+const estado = { r: 250, z: Z_GARRA, alfa: 90, q1: 35, paso: 5 };
+
+function dibujarMapa(){
+  const cv = $('mapa'), ctx = cv.getContext('2d');
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  if (!$('verMapa').checked) return;
+  const k = cv.width/ANCHO, paso = 3;                 // mm de resolucion
+  const colores = [
+    getComputedStyle(document.documentElement).getPropertyValue('--mapa-ok'),
+    getComputedStyle(document.documentElement).getPropertyValue('--mapa-caja'),
+    getComputedStyle(document.documentElement).getPropertyValue('--mapa-vent'),
+    getComputedStyle(document.documentElement).getPropertyValue('--mapa-lejos')];
+  for (let r = 0; r <= 360; r += paso){
+    for (let z = 0; z <= 400; z += paso){
+      ctx.fillStyle = colores[estadoPunto(r, z, estado.alfa)];
+      ctx.fillRect(X(r)*k, (Y(z) - paso)*k, paso*k + 1, paso*k + 1);
+    }
+  }
+}
+
+function flecha(x1, y1, x2, y2, color, ancho){
+  const ang = Math.atan2(y2 - y1, x2 - x1), L = 7, a = .42;
+  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}"
+            stroke-width="${ancho}"/><polygon points="${x2},${y2}
+            ${x2 - L*Math.cos(ang - a)},${y2 - L*Math.sin(ang - a)}
+            ${x2 - L*Math.cos(ang + a)},${y2 - L*Math.sin(ang + a)}" fill="${color}"/>`;
+}
+function texto(x, y, s, color, tam = 10, anchor = 'middle'){
+  return `<text x="${x}" y="${y}" fill="${color}" font-size="${tam}"
+            font-family="var(--dato)" text-anchor="${anchor}"
+            dominant-baseline="middle">${s}</text>`;
+}
+function brazoDe(rama, color, ancho, opac){
+  const p = rama.pts, s = [];
+  for (let i = 0; i < 3; i++)
+    s.push(`<line x1="${X(p[i][0])}" y1="${Y(p[i][1])}" x2="${X(p[i+1][0])}"
+             y2="${Y(p[i+1][1])}" stroke="${color}" stroke-width="${ancho}"
+             stroke-linecap="round" opacity="${opac}"/>`);
+  p.forEach(([r, z], i) => s.push(`<circle cx="${X(r)}" cy="${Y(z)}" r="${i === 3 ? 2.6 : 3.6}"
+    fill="var(--papel)" stroke="${color}" stroke-width="1.8" opacity="${opac}"/>`));
+  return s.join('');
+}
+
+function dibujar(c){
+  const g = [], paso = estado.paso;
+
+  // --- escenario ---
+  g.push(`<rect x="0" y="${Y(0)}" width="${ANCHO}" height="${ALTO - Y(0)}"
+           fill="var(--linea)" opacity=".25"/>`);
+  g.push(`<line x1="0" y1="${Y(0)}" x2="${ANCHO}" y2="${Y(0)}" stroke="var(--tinta)"
+           stroke-width="1.4"/>`);
+  g.push(`<rect x="${X(-CAJA_W/2)}" y="${Y(CAJA_H)}" width="${CAJA_W}" height="${CAJA_H}"
+           fill="var(--papel-2)" stroke="var(--tinta-2)" stroke-width="1.2"/>`);
+  g.push(`<rect x="${X(-20)}" y="${Y(H_HOMBRO)}" width="40" height="${H_HOMBRO - CAJA_H}"
+           fill="var(--papel-2)" stroke="var(--tinta-2)" stroke-width="1"/>`);
+  g.push(`<rect x="${X(250 - VASO_D/2)}" y="${Y(VASO_H)}" width="${VASO_D}" height="${VASO_H}"
+           fill="none" stroke="var(--tinta-2)" stroke-width="1" stroke-dasharray="3 2"
+           opacity=".8"/>`);
+  g.push(texto(X(0), Y(H_HOMBRO) - 12, 'hombro', 'var(--tinta-2)', 10));
+  g.push(`<circle cx="${X(0)}" cy="${Y(H_HOMBRO)}" r="3.4" fill="var(--grafito)"/>`);
+
+  // --- paso 3: el triangulo y los circulos ---
+  if (paso >= 3 && c.alcanza && $('verCirculos').checked){
+    g.push(`<circle cx="${X(0)}" cy="${Y(H_HOMBRO)}" r="${L1}" fill="none"
+             stroke="var(--rama-a)" stroke-width="1" stroke-dasharray="4 3" opacity=".65"/>`);
+    g.push(`<circle cx="${X(c.rm)}" cy="${Y(c.zm)}" r="${L2}" fill="none"
+             stroke="var(--rama-b)" stroke-width="1" stroke-dasharray="4 3" opacity=".65"/>`);
+    g.push(texto(X(0) - L1*0.72, Y(H_HOMBRO) - L1*0.72, 'L1 = 120', 'var(--rama-a)', 9.5));
+    g.push(texto(X(c.rm) + L2*0.7, Y(c.zm) + L2*0.7, 'L2 = 120', 'var(--rama-b)', 9.5));
+  }
+  if (paso >= 3 && c.alcanza){
+    g.push(`<line x1="${X(0)}" y1="${Y(H_HOMBRO)}" x2="${X(c.rm)}" y2="${Y(c.zm)}"
+             stroke="var(--acento)" stroke-width="1.6"/>`);
+    g.push(texto((X(0) + X(c.rm))/2 + 14, (Y(H_HOMBRO) + Y(c.zm))/2 - 10,
+                 `d = ${num(c.d, 1)}`, 'var(--acento)', 10.5));
+  }
+
+  // --- paso 2: el desacople de muneca ---
+  if (paso >= 2){
+    g.push(flecha(X(estado.r), Y(estado.z), X(c.rm), Y(c.zm), 'var(--acento)', 1.6));
+    g.push(`<circle cx="${X(c.rm)}" cy="${Y(c.zm)}" r="4" fill="none"
+             stroke="var(--acento)" stroke-width="1.8"/>`);
+    g.push(texto(X(c.rm) - 8, Y(c.zm) - 12, `muñeca`, 'var(--acento)', 10, 'end'));
+    g.push(texto((X(estado.r) + X(c.rm))/2, Y(c.zm) + 14, `L3 = 85`, 'var(--acento)', 9.5));
+  }
+
+  // --- paso 4 y 5: las ramas ---
+  if (paso >= 4){
+    for (const rama of c.ramas){
+      if (rama.sirve) continue;
+      if (!$('verRama').checked) continue;
+      g.push(brazoDe(rama, 'var(--rama-b)', 3, .5));
+    }
+    if (c.elegida) g.push(brazoDe(c.elegida, 'var(--grafito)', 6, 1));
+    else if (c.ramas.length && $('verRama').checked)
+      g.push(brazoDe(c.ramas[0], 'var(--mal)', 3.4, .75));
+  }
+
+  // --- el objetivo, siempre ---
+  g.push(`<circle cx="${X(estado.r)}" cy="${Y(estado.z)}" r="7" fill="none"
+           stroke="var(--objetivo)" stroke-width="2"/>`);
+  g.push(`<circle cx="${X(estado.r)}" cy="${Y(estado.z)}" r="1.8" fill="var(--objetivo)"/>`);
+  g.push(texto(X(estado.r), Y(estado.z) - 15,
+               `(${num(estado.r)}, ${num(estado.z)})`, 'var(--objetivo)', 10));
+
+  $('dibujo').innerHTML = g.join('');
+}
+
+/* ---------- los pasos ---------- */
+function contenidoPaso(c){
+  const p = estado.paso;
+  const x = estado.r*Math.cos(rad(estado.q1)), y = estado.r*Math.sin(rad(estado.q1));
+  if (p === 1) return {
+    t: '1. La base sale sola',
+    e: `Del punto pedido salen el giro de la base y el radio. <strong>No hay ambigüedad</strong>:
+        la bibliografía avisa que se podría girar 180° y alcanzar el punto «de espaldas», pero el
+        hombro de este brazo arranca en 50° desde la vertical, siempre inclinado hacia adelante,
+        así que el radio nunca es negativo. Lo que queda es un problema plano.`,
+    c: `q1 = atan2(y, x) = atan2(${num(y, 1)}, ${num(x, 1)}) = <b>${num(estado.q1, 1)}°</b>\n` +
+       ` r = √(x² + y²) = <b>${num(estado.r, 1)} mm</b>`};
+  if (p === 2) return {
+    t: '2. Descontar la pinza',
+    e: `El truco que hace fácil todo lo demás, y tiene nombre: <strong>desacople de muñeca</strong>.
+        Si decidís con qué orientación α llega la pinza, la posición de la muñeca queda
+        determinada, y el problema pasa de tres eslabones a dos.`,
+    c: `rm = r − L3·sen α = ${num(estado.r, 1)} − 85·${num(Math.sin(rad(estado.alfa)), 3)}` +
+       ` = <b>${num(c.rm, 1)} mm</b>\n` +
+       `zm = z − L3·cos α = ${num(estado.z, 1)} − 85·${num(Math.cos(rad(estado.alfa)), 3)}` +
+       ` = <b>${num(c.zm, 1)} mm</b>`};
+  if (p === 3) return {
+    t: '3. El triángulo',
+    e: c.alcanza
+      ? `Del hombro a la muñeca hay una distancia <b>d</b>. El codo está a L1 del hombro y a L2 de
+         la muñeca, así que <strong>tiene que estar donde se cruzan los dos círculos</strong>. Como
+         L1 = L2 el triángulo es isósceles y la cuenta evita la ley del coseno: alcanza con mirar
+         media altura, que es un triángulo rectángulo.`
+      : `Los dos círculos <strong>ya no se cortan</strong>: la muñeca quedó a ${num(c.d, 1)} mm del
+         hombro y los dos eslabones suman 240. El <code>arccos</code> haría cuentas con un
+         argumento mayor que 1, y por eso el test de alcance es la propia fórmula.`,
+    c: `d = √(rm² + (zm − 190)²) = <b>${num(c.d, 1)} mm</b>   ` +
+       `${c.alcanza ? '≤ 240 ✓' : '> 240 ✗ sin solución'}\n` +
+       (c.alcanza
+         ? `semi  = arccos(d / 240) = arccos(${num(c.d/240, 3)}) = <b>${num(gra(c.semi), 1)}°</b>\n` +
+           `medio = atan2(rm, zm − 190) = <b>${num(gra(c.medio), 1)}°</b>`
+         : `el alcance máximo a esta altura es √(240² − (190 − z)²) + 85`)};
+  if (p === 4) return {
+    t: '4. Las dos ramas',
+    e: `El <b>±</b> del triángulo son las dos intersecciones de los círculos: <strong>codo abajo</strong>
+        y <strong>codo arriba</strong>, espejo una de la otra respecto de la línea hombro-muñeca. La
+        muñeca se calcula después, para que la pinza quede en el α pedido.`,
+    c: c.alcanza
+      ? c.ramas.map(b => `${b.nombre.padEnd(12)} q2 = ${num(b.q[1], 1).padStart(6)}°   ` +
+          `q3 = ${num(b.q[2], 1).padStart(6)}°   q4 = ${num(b.q[3], 1).padStart(6)}°`).join('\n')
+      : 'sin solución geométrica: no hay ramas que evaluar'};
+  return {
+    t: '5. Los cuatro filtros',
+    e: `Una solución geométrica no es una solución útil. Hay que pasar cuatro filtros: alcance,
+        las tres ventanas de recorrido, la guarda contra la caja, y que ningún punto del brazo
+        quede bajo la mesa. <strong>Y acá pasa lo importante</strong>: la ventana del codo va de 0°
+        a 120°, y la rama de codo arriba necesita codo negativo, así que siempre queda descartada.
+        Nunca hay que elegir: o hay una solución o no hay ninguna.`,
+    c: c.elegida
+      ? `rama elegida: <b>${c.elegida.nombre}</b>\n` +
+        `q = [${c.elegida.q.map(v => num(v, 1)).join(', ')}]  grados\n` +
+        `alcance ✓   ventanas ✓   guarda ✓   sobre la mesa ✓`
+      : `sin solución útil: <b>${c.motivo}</b>`};
+}
+
+/* ---------- pintar ---------- */
+function pintar(){
+  const c = construir(estado.r, estado.z, estado.alfa, estado.q1);
+  dibujar(c);
+
+  const info = contenidoPaso(c);
+  $('tituloPaso').textContent = info.t;
+  $('explicaPaso').innerHTML = info.e;
+  $('cuentaPaso').innerHTML = info.c;
+  $('contador').textContent = `paso ${estado.paso} de 5`;
+  $('anterior').disabled = estado.paso === 1;
+  $('siguiente').disabled = estado.paso === 5;
+  document.querySelectorAll('[data-paso]').forEach(b =>
+    b.setAttribute('aria-pressed', String(+b.dataset.paso === estado.paso)));
+
+  $('ramas').innerHTML = c.ramas.length
+    ? c.ramas.map(b => `<div class="rama ${b.sirve ? 'usada' : 'descartada'}">
+        <h4>${b.nombre}</h4>
+        <div class="q">q2 ${num(b.q[1], 1)}° · q3 ${num(b.q[2], 1)}° · q4 ${num(b.q[3], 1)}°</div>
+        <div class="por">${b.sirve ? '✓ pasa los cuatro filtros' : '✗ ' + b.motivo}</div>
+      </div>`).join('')
+    : `<div class="rama descartada"><h4>ninguna</h4>
+        <div class="por">✗ el punto está fuera de alcance: los círculos no se cortan</div></div>`;
+
+  const q = c.elegida ? c.elegida.q : null;
+  $('ejes').innerHTML = NOMBRES.map((n, i) => {
+    const [lo, hi] = VENT[n];
+    const v = q ? q[i] : null;
+    const malo = v !== null && (v < lo || v > hi);
+    const pos = v === null ? null : lim((v - lo)/(hi - lo), 0, 1)*100;
+    return `<div class="eje ${malo ? 'mal' : ''}">
+      <label>${n}</label>
+      <span class="barra">${pos === null ? '' : `<i style="left:calc(${pos}% - 1.5px)"></i>`}</span>
+      <output>${v === null ? '—' : num(v, 1) + '°'}</output></div>`;
+  }).join('');
+
+  $('r-r').textContent = num(estado.r) + ' mm';
+  $('r-z').textContent = num(estado.z) + ' mm';
+  $('r-xy').textContent = `${num(estado.r*Math.cos(rad(estado.q1)))}, ` +
+                          `${num(estado.r*Math.sin(rad(estado.q1)))}`;
+  const dur = dureza(estado.r, estado.z, estado.alfa);
+  $('r-dureza').textContent = dur === null ? '—' : num(dur, 2) + ' °/mm';
+
+  $('estado').innerHTML = c.elegida
+    ? `<span class="chip si">alcanzable</span>`
+    : `<span class="chip no">${c.motivo}</span>`;
+
+  if (c.elegida){
+    const [q1, q2, q3, q4] = c.elegida.q.map(rad);
+    const a23 = q2 + q3, a234 = a23 + q4;
+    const r = L1*Math.sin(q2) + L2*Math.sin(a23) + L3*Math.sin(a234);
+    const z = H_HOMBRO + L1*Math.cos(q2) + L2*Math.cos(a23) + L3*Math.cos(a234);
+    const e = Math.max(Math.abs(r - estado.r), Math.abs(z - estado.z));
+    $('control').innerHTML = `control: la directa aplicada al resultado devuelve ` +
+      `r = ${num(r, 3)}, z = ${num(z, 3)} · error ${e.toExponential(1).replace('.', ',')} mm`;
+  } else $('control').textContent = 'control: sin solución que verificar';
+
+  const rango = rangoAlfa(estado.r, estado.z);
+  $('limAlfa').textContent = rango ? `útil de ${rango[0]}° a ${rango[1]}°` : 'ninguna α sirve acá';
+  $('o-alfa').textContent = num(estado.alfa) + '°';
+  $('o-q1').textContent = num(estado.q1) + '°';
+  $('epigrafe').textContent = estado.alfa === 90
+    ? 'α = 90°: la pinza horizontal, obligatoria mientras sostiene el vaso'
+    : `α = ${num(estado.alfa)}°: sólo válido con la pinza vacía`;
+}
+
+/* ---------- interaccion ---------- */
+const lienzo = $('lienzo');
+function desdeEvento(ev){
+  const caja = lienzo.getBoundingClientRect();
+  const r = (ev.clientX - caja.left)/caja.width*ANCHO - OFF_R;
+  const z = OFF_Z - (ev.clientY - caja.top)/caja.height*ALTO;
+  estado.r = lim(Math.round(r), 0, 360);
+  estado.z = lim(Math.round(z), 0, 400);
+  pintar();
+}
+let arrastrando = false;
+lienzo.addEventListener('pointerdown', ev => {
+  arrastrando = true; lienzo.setPointerCapture(ev.pointerId); desdeEvento(ev);
+});
+lienzo.addEventListener('pointermove', ev => { if (arrastrando) desdeEvento(ev); });
+lienzo.addEventListener('pointerup', () => { arrastrando = false; });
+lienzo.addEventListener('pointercancel', () => { arrastrando = false; });
+
+document.querySelectorAll('[data-paso]').forEach(b =>
+  b.addEventListener('click', () => { estado.paso = +b.dataset.paso; pintar(); }));
+$('anterior').addEventListener('click', () => { estado.paso = Math.max(1, estado.paso - 1); pintar(); });
+$('siguiente').addEventListener('click', () => { estado.paso = Math.min(5, estado.paso + 1); pintar(); });
+document.querySelectorAll('[data-punto]').forEach(b => b.addEventListener('click', () => {
+  const [r, z] = b.dataset.punto.split(',').map(Number);
+  estado.r = r; estado.z = z; pintar();
+}));
+$('alfa').addEventListener('input', ev => {
+  estado.alfa = +ev.target.value; dibujarMapa(); pintar();
+});
+$('q1').addEventListener('input', ev => { estado.q1 = +ev.target.value; pintar(); });
+$('verMapa').addEventListener('change', () => { dibujarMapa(); });
+['verRama', 'verCirculos'].forEach(id => $(id).addEventListener('change', pintar));
+addEventListener('keydown', ev => {
+  const d = ev.shiftKey ? 10 : 1;
+  if (ev.key === 'ArrowLeft') estado.r -= d;
+  else if (ev.key === 'ArrowRight') estado.r += d;
+  else if (ev.key === 'ArrowUp') estado.z += d;
+  else if (ev.key === 'ArrowDown') estado.z -= d;
+  else return;
+  ev.preventDefault();
+  estado.r = lim(estado.r, 0, 360); estado.z = lim(estado.z, 0, 400);
+  pintar();
+});
+
+dibujarMapa();
+pintar();
+</script>

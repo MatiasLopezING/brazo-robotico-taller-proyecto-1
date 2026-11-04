@@ -1,0 +1,8 @@
+# Consulta pura: que angulos hacen falta para un punto. No mueve el brazo.
+geometry_msgs/Point punto        # [m] en el marco base_link
+float64 alfa_grados              # orientacion de la pinza; 90 = horizontal
+---
+bool alcanzable
+string motivo                    # 'ok', 'fuera de alcance', 'fuera de ventana: ...',
+                                 # 'el brazo chocaria la caja'
+float64[] q                      # [grados] base, hombro, codo, muneca
