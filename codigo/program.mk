@@ -1,2 +1,2 @@
-PROGRAM_PATH = examples/c
-PROGRAM_NAME = app
+PROGRAM_PATH = examples/c/sapi/
+PROGRAM_NAME = servo

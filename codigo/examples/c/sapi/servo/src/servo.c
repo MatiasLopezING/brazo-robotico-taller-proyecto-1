@@ -109,13 +109,13 @@ int main(void)
    // ------------- REPETIR POR SIEMPRE -------------
    while(1) {
       servoWrite( SERVO_N, 0 );
-      delay(500);
+      delay(800);
 
       servoWrite( SERVO_N, 90 );
-      delay(500);
+      delay(800);
 
       servoWrite( SERVO_N, 180 );
-      delay(500);
+      delay(800);
    }
 
    // NO DEBE LLEGAR NUNCA AQUI, debido a que a este programa no es llamado
