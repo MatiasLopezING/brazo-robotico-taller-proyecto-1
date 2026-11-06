@@ -1,0 +1,52 @@
+ENTREGA - Informe de Avance 2
+Grupo 3 - Taller de Proyecto I (E0306) - UNLP
+Brazo Robotico Teleoperado de Cinco Servomotores
+6 de noviembre de 2026
+
+INTEGRANTES
+   Matias Lopez            legajo 02670/0
+   Juan David Alvarez      legajo 03100/2
+   Ariana Magali Ariza     legajo 02879/6
+   Lautaro Nahuel Lopes    legajo 02978/9
+
+CONTENIDO
+
+1) Grupo3-InfAvance2-BrazoRobotico.pdf
+
+   El informe. Continua el Informe de Avance 1 sobre el mismo documento. Lo
+   agregado en este periodo es:
+
+      4.7   analisis cinematico: cinematica directa, verificacion por
+            Denavit-Hartenberg, espacio de trabajo real y cinematica inversa
+      4.8   diseno del circuito impreso, lista de materiales con encapsulados
+            y huellas, y verificacion del diseno antes de fabricar
+      5.2   diagrama de estados rehecho, con las transiciones detalladas
+      5.3   verificacion del modelo cinematico sobre banco de simulacion
+      5.4   primer ensayo sobre el servomotor MG996R
+      5.5   enlace de diagnostico con la computadora
+      6, 7  cronograma y division de tareas reajustados
+      D, E  anexos nuevos: diseno de circuitos impresos y ejemplo resuelto
+            de cinematica inversa
+
+   Las tres imagenes que pide la plantilla estan dentro del informe:
+   esquematico completo en el Anexo A (figuras A.1 y A.2), capas TOP y BOTTOM
+   del PCB en las figuras 9 y 10, y vista 3D en la figura 8.
+
+2) proyecto-kicad/
+
+   El proyecto de KiCad completo, para abrir y corregir el PCB.
+
+      brazo.kicad_pro   archivo de proyecto
+      brazo.kicad_sch   esquematico
+      brazo.kicad_pcb   placa
+
+   El estado del diseno y lo que queda por corregir estan documentados en la
+   seccion 4.8 del informe, bajo "Verificacion del diseno antes de la
+   fabricacion".
+
+3) anexo-video/ensayo-funcional-servo.mp4
+
+   Registro de la prueba interna del servomotor MG996R descrita en la seccion
+   5.4. No es una medicion: documenta que el conexionado y la generacion de la
+   senal de accionamiento funcionan, y que el recorrido entre extremos es del
+   orden de 180 grados.

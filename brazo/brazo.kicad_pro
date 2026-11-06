@@ -661,7 +661,7 @@
         "uuid": "46a8edc4-559a-4d83-882b-608c5862d7ba"
       }
     ],
-    "used_designators": "J_JOY_B1,J1-5,J_SERVO2-5,#PWR1-23,SW1,F1,C1,J_JOY_A1,J_PWR_5V1,SW_PINZA1",
+    "used_designators": "J1-5,J_JOY_B1,#PWR1-23,J_SERVO2-5,SW1,F1,C1,J_JOY_A1,J_PWR_5V1,SW_PINZA1",
     "variants": []
   },
   "sheets": [
