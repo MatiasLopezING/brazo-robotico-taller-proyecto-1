@@ -37,3 +37,10 @@ video/media/
 # Python (bytecode generado)
 __pycache__/
 *.py[cod]
+
+# KiCad (archivos locales que genera cada uno)
+~*.lck
+.history/
+*-backups/
+fp-info-cache
+*.rpt
