@@ -1,0 +1,9 @@
+(version 1)
+
+# Medidas de Malena (26-11-2026): pads de 2,0 mm en pines a 2,54 mm.
+# Entre dos pads vecinos de un mismo conector quedan 0,54 mm, asi que entre
+# pads se pide 0,5 mm. Todo lo demas (pistas, vias, plano de masa) usa los
+# 0,7 mm de la clase de red.
+(rule "Entre pads de pines: 0,5 mm"
+	(constraint clearance (min 0.5mm))
+	(condition "A.Type == 'Pad' && B.Type == 'Pad'"))
