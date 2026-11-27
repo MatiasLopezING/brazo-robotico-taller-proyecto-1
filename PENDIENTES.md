@@ -4,7 +4,7 @@
 
 # ⚠ NUEVO — Revisión del PCB antes de fabricar (4-11-2026)
 
-Detectado al revisar el **netlist real de `brazo/brazo.kicad_pcb`**, que es lo que se
+Detectado al revisar el **netlist real de `pcb/brazo.kicad_pcb`**, que es lo que se
 fabrica, contra el mapa de periféricos de sAPI
 (`codigo/libs/sapi/documentation/PeripheralMap_EDU-CIAA-NXP.txt`) y la documentación de la
 placa. Los dos primeros puntos hay que corregirlos **antes de subir el `.kicad_pro`**.
